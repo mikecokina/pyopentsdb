@@ -5,7 +5,7 @@ def tsdb_configuration(host, port, protocol):
     url = api_url(host, port, protocol)
     response = requests.get(url)
 
-    if response.status_code in [200, 201]:
+    if response.status_code in [200]:
         return json.loads(response.content.decode())
 
 def api_url(host, port, protocol):
