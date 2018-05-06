@@ -1,24 +1,26 @@
 from pytsdb import aggregators
 from pytsdb import config
 from pytsdb import put
+from pytsdb import query
 import warnings
+from datetime import datetime
 
 
 class TsdbConnector(object):
-    def __init__(self, host, port, *args, **kwargs):
+    def __init__(self, host, port, **kwargs):
         self._host = host
         self._port = port
         self._protocol = kwargs.get('protocol', 'http')
         self._config = self.parameters_serializer()
 
-    def get_aggregators(self):
+    def aggregators(self):
         """
         This endpoint simply lists the names of implemented aggregation functions used in timeseries queries.
         :return:  json (list)
         """
         return aggregators.aggregators(**self._config)
 
-    def get_config(self):
+    def config(self):
         """
         This endpoint returns information about the running configuration of the TSD.
         It is read only and cannot be used to set configuration options.
@@ -55,6 +57,28 @@ class TsdbConnector(object):
 
         return put.put(**params)
 
+    def query(self, metric, start, end, tags=None, aggregator="sum", downsample=None, ms_resolution=True):
+        if tags is None:
+            tags = {}
+        params = self._config
+        start = start.timestamp() if isinstance(start, datetime) else start
+        end = end.timestamp() if isinstance(end, datetime) else end
+
+        params.update(
+            {
+                'metric': metric,
+                'start': start,
+                'end': end,
+                'tags': tags,
+                'aggregator': aggregator,
+                'downsample': downsample,
+                'ms_resolution': ms_resolution,
+
+            }
+        )
+
+        return query.query(**params)
+
     def parameters_serializer(self):
         return {
             'host': self._host,
@@ -63,6 +87,6 @@ class TsdbConnector(object):
         }
 
 
-def connect(host, port, *args, **kwargs):
-    return TsdbConnector(host, port, args, kwargs)
+def connect(host, port, **kwargs):
+    return TsdbConnector(host, port, **kwargs)
 
