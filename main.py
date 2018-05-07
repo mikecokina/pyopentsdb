@@ -25,6 +25,20 @@ data = [
     }
 ]
 
-start = 1346846401
-# start = datetime(2016, 1, 1, 12, 21, 5, 34)
-c.query(metric="sys.cpu.nice", start=start, end=1346846404, tags={'host': 'web02', 'dc': 'lga'}, aggregator='none', ms_resolution=True)
+start = datetime(2000, 1, 1, 23, 0, 0, 0)
+end = datetime(2018, 1, 1, 0, 0, 0, 0)
+metric_filters=[
+    {
+        "type": "wildcard",
+        "tagk": "host",
+        "filter": "web02*",
+        "groupBy": True
+    }
+]
+
+
+c.query(metric="sys.cpu.nice", metric_filters=metric_filters, tsuids=["000001000001000003000002000002"], start=start, end=end, tags={'dc': 'lga'}, aggregator='none', ms=True, show_tsuids=True)
+
+print(c.filters())
+
+

@@ -3,7 +3,6 @@ from pytsdb import config
 from pytsdb import put
 from pytsdb import query
 import warnings
-from datetime import datetime
 
 
 class TsdbConnector(object):
@@ -57,27 +56,16 @@ class TsdbConnector(object):
 
         return put.put(**params)
 
-    def query(self, metric, start, end, tags=None, aggregator="sum", downsample=None, ms_resolution=True):
-        if tags is None:
-            tags = {}
-        params = self._config
-        start = start.timestamp() if isinstance(start, datetime) else start
-        end = end.timestamp() if isinstance(end, datetime) else end
+    def query(self, **kwargs):
+        return query.query(self._host, self._port, self._protocol, **kwargs)
 
-        params.update(
-            {
-                'metric': metric,
-                'start': start,
-                'end': end,
-                'tags': tags,
-                'aggregator': aggregator,
-                'downsample': downsample,
-                'ms_resolution': ms_resolution,
+    def filters(self):
+        """
+        This endpoint lists the various filters loaded by the TSD and some information about how to use them.
 
-            }
-        )
-
-        return query.query(**params)
+        :return: json
+        """
+        return config.filters(self._host, self._port, self._protocol)
 
     def parameters_serializer(self):
         return {
