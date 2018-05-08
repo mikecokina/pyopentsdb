@@ -4,6 +4,7 @@ from pytsdb import put
 from pytsdb import query
 from pytsdb import stats
 from pytsdb import version
+from pytsdb import suggest
 import warnings
 
 
@@ -167,7 +168,7 @@ class TsdbConnector(object):
                                 "groupBy": False
                             }]
 
-                tags: dict
+               tags: dict
                         To drill down to specific timeseries or group results by tag, supply one or more map values
                         in the same format as the query string. Tags are converted to filters in 2.2.
                         See the notes below about conversions. Note that if no tags are specified, all metrics
@@ -176,10 +177,10 @@ class TsdbConnector(object):
                         example:
                             {tagk: tagv}
 
-                explicit_tags: bool
+               explicit_tags: bool
                         Returns the series that include only the tag keys provided in the filters.
 
-                downsample: str
+               downsample: str
                         An optional downsampling function to reduce the amount of data returned.
 
                         examples:
@@ -192,12 +193,12 @@ class TsdbConnector(object):
                         pattern:
                             <Size><Units>-<Aggregator>-<Fill Policy>
 
-                rate: bool
+               rate: bool
                         Whether or not the data should be converted into deltas before returning.
                         This is useful if the metric is a continuously incrementing counter and you
                         want to view the rate of change between data points.
 
-                rate_options: json
+               rate_options: json
                         counter: bool
                             Whether or not the underlying data is a monotonically increasing counter that may roll over
 
@@ -290,6 +291,29 @@ class TsdbConnector(object):
         :return: json
         """
         return version.version(self._host, self._port, self._protocol)
+
+    def suggest(self, **kwargs):
+        """
+        This endpoint provides a means of implementing an "auto-complete" call that can be accessed
+        repeatedly as a user types a request in a GUI. It does not offer full text searching or wildcards,
+        rather it simply matches the entire string passed in the query on the first characters
+        of the stored data. For example, passing a query of type=metrics&q=sys will return the top 25
+        metrics in the system that start with sys. Matching is case sensitive, so sys will not match System.CPU.
+        Results are sorted alphabetically.
+
+        :param kwargs: dict
+               type: str
+                    The type of data to auto complete on. Must be one of the following: metrics, tagk or tagv
+
+               q:
+                    A string to match on for the given type
+
+               max:
+                    The maximum number of suggested results to return. Must be greater than 0
+
+        :return: json
+        """
+        return suggest.suggest(self._host, self._port, self._protocol, **kwargs)
 
     def parameters_serializer(self):
         return {
