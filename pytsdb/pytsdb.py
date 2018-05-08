@@ -292,4 +292,3 @@ class TsdbConnector(object):
 
 def connect(host, port, **kwargs):
     return TsdbConnector(host, port, **kwargs)
-

@@ -1,4 +1,3 @@
-from pytsdb import errors
 from pytsdb import request
 
 def stats(host, port, protocol):
