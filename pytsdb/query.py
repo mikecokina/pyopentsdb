@@ -1,6 +1,7 @@
 import requests
 import json
 from pytsdb import errors
+import warnings
 
 
 def query(host, port, protocol, **kwargs):
@@ -34,6 +35,9 @@ def query(host, port, protocol, **kwargs):
     delete_match = bool(kwargs.get('delete', False))
     timezone = kwargs.get('timezone', 'UTC')
     use_calendar = bool(kwargs.get('use_calendar', False))
+
+    if delete_match:
+        warnings.warn('To data deletion tsd.http.query.allow_delete has to be set')
 
     # basic
     params = {
