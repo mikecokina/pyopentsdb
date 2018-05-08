@@ -106,6 +106,16 @@ def query(host, port, protocol, **kwargs):
 
 
 def delete(host, port, protocol, **kwargs):
+    """
+
+    :param host: str
+    :param port: str
+    :param protocol: str
+    :param kwargs: dict
+
+    :return: json
+    """
+
     kwargs.update({'delete': True})
     return query(host, port, protocol, **kwargs)
 

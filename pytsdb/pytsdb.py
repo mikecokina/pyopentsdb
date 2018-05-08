@@ -214,6 +214,15 @@ class TsdbConnector(object):
         """
         return query.query(self._host, self._port, self._protocol, **kwargs)
 
+    def delete(self, **kwargs):
+        """
+        Enables deletion of data matching query. Use same the kwargs used for query
+
+        :param kwargs: dict
+        :return: json
+        """
+        return query.delete(self._host, self._port, self._protocol, **kwargs)
+
     def filters(self):
         """
         This endpoint lists the various filters loaded by the TSD and some information about how to use them.

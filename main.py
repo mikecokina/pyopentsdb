@@ -5,24 +5,24 @@ from datetime import datetime
 c = pytsdb.connect(host='158.197.204.202', port='4242')
 
 data = [
-    {
-        "metric": "sys.cpu.nice",
-        "timestamp": 1346846409,
-        "value": 31,
-        "tags": {
-           "host": "web01",
-           "dc": "lga"
-        }
-    },
     # {
     #     "metric": "sys.cpu.nice",
-    #     "timestamp": 1346846403,
-    #     "value": 9,
+    #     "timestamp": 1346846409,
+    #     "value": 31,
     #     "tags": {
-    #        "host": "web02",
+    #        "host": "web01",
     #        "dc": "lga"
     #     }
-    # }
+    # },
+    {
+        "metric": "sys.cpu.nice",
+        "timestamp": 1346846403,
+        "value": 8,
+        "tags": {
+           "host": "web02",
+           "dc": "lga"
+        }
+    }
 ]
 # c.put(data=data, details=True)
 
@@ -52,10 +52,17 @@ rate_options = {
     # 'counter': True,
     # 'counterMax': 0,
     # 'resetValue': 1,
-    'dropResets': True,
+    # 'dropResets': True,
 }
 
-c.query(metric=metric, tsuids=tsuids, rate=True, rate_options=rate_options,
-        start=start, end=end, tags={"host": "web01"},
-        aggregator='sum', ms=True, show_tsuids=False)
+d = c.query(metric=metric, tsuids=tsuids, rate=False,
+            start=start, end=end, tags={"host": "web02"},
+            aggregator='sum', ms=True, show_tsuids=False)
+
+# dd = c.delete(metric=metric, tsuids=tsuids, rate=False,
+#               start=start, end=end, tags={"host": "web02"},
+#               aggregator='sum', ms=True, show_tsuids=False)
+
+
+print(d[0]['dps'])
 
