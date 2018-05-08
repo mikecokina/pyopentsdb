@@ -4,3 +4,6 @@ class TsdbQueryError(Exception):
 
 class TsdbConnectionError(Exception):
     pass
+
+class MissingArgumentsError(Exception):
+    pass

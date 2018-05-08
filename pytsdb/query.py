@@ -14,7 +14,6 @@ def query(host, port, protocol, **kwargs):
 
     :return: json
     """
-    # todo: double check all required params in all objects
 
     try:
         start = kwargs['start']
@@ -74,6 +73,10 @@ def query(host, port, protocol, **kwargs):
         q.update({'tags': kwargs.get('tags')})
 
     if kwargs.get('filters'):
+        for filter_object in kwargs.get('filters'):
+            if not filter_object.get('type') or not filter_object.get('tagk') or not filter_object.get('filter'):
+                raise errors.MissingArgumentsError('Missing argument type, tagk or filter in filters item object')
+
         q.update({'filters': kwargs.get('filters')})
 
     if kwargs.get('downsample'):
@@ -96,6 +99,9 @@ def query(host, port, protocol, **kwargs):
             }
         )
         queries.append(tq)
+
+    if not queries:
+        raise errors.MissingArgumentsError('Missing metrics or tsuids to resolve')
 
     params.update({'queries': queries})
 
@@ -136,12 +142,12 @@ def exp(host, port, protocol, **kwargs):
     try:
         start = kwargs['start']
     except KeyError:
-        raise KeyError('start is a required argument')
+        raise errors.MissingArgumentsError('start is a required argument')
 
     try:
         aggregator = kwargs['aggregator']
     except KeyError:
-        raise KeyError('aggregator is a required argument')
+        raise errors.MissingArgumentsError('aggregator is a required argument')
 
     time_json.update({
         'start': start.timestamp(),
@@ -154,12 +160,12 @@ def exp(host, port, protocol, **kwargs):
     if kwargs.get('downsampler'):
         # required params in donwsampler object
         if not kwargs['downsampler'].get('interval') or not kwargs['downsampler'].get('aggregator'):
-            raise KeyError('Reqiured parameters interval and aggregator in downsampler object')
+            raise errors.MissingArgumentsError('Reqiured arguments interval and aggregator in downsampler object')
 
         if kwargs['downsampler'].get('fillPolicy'):
-            # required parameter in downsampler.fillPolicy object
+            # required argument in downsampler.fillPolicy object
             if not kwargs['downsampler']['fillPolicy'].get('policy'):
-                raise KeyError('Reqiured parameter policy in downsampler.fillPolicy object')
+                raise errors.MissingArgumentsError('Reqiured argument policy in downsampler.fillPolicy object')
 
         time_json.update({'downsampler': kwargs.get('downsampler')})
 
@@ -169,22 +175,19 @@ def exp(host, port, protocol, **kwargs):
     q.update({'time': time_json})
 
     # filters JSON
-    filters_json = dict()
-
     if kwargs.get('filters'):
-        # required param in filters object
-        if not kwargs['filters'].get('id'):
-            raise KeyError('Missing required parameter id in filters object')
-        filters_json.update({'id': kwargs['filters'].get('id')})
+        for filter_object in kwargs.get('filters'):
+            # required param in filters object
+            if not filter_object.get('id'):
+                raise errors.MissingArgumentsError('Missing required argument id in filters object')
+            if filter_object.get('tags'):
+                # required param in filters.tags objects
+                for tags_object in filter_object['tags']:
+                    if not tags_object.get('type') or not tags_object.get('tagk') or not tags_object.get('filter'):
+                        raise errors.MissingArgumentsError('Missing argument type, tagk or '
+                                                           'filter in filters.tags object')
 
-        if kwargs['filters'].get('tags'):
-            # required param in filters.tags objects
-            for tags_object in kwargs['filters']['tags']:
-                if not tags_object.get('type') or not tags_object.get('tagk') or not tags_object.get('filter'):
-                    raise KeyError('Missing parameter type, tagk or filter in filters.tags object')
-        filters_json.update({'tags': kwargs['filters'].get('tags')})
-
-    q.update({'filters': [filters_json]})
+        q.update({'filters': kwargs.get('filters')})
     return q
 
 
@@ -206,7 +209,7 @@ def exp(host, port, protocol, **kwargs):
 
 
 def api_url(host, port, protocol, pointer):
-    if pointer == 'QUERYe':
+    if pointer == 'QUERY':
         return '{}://{}:{}/api/query/'.format(protocol, host, port)
     elif pointer == 'EXP':
         return '{}://{}:{}/api/query/exp/'.format(protocol, host, port)

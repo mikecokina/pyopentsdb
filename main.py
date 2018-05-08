@@ -29,15 +29,26 @@ data = [
 
 start = datetime(2000, 1, 1, 23, 0, 0, 0)
 end = datetime(2018, 1, 1, 0, 0, 0, 0)
-filters = {
-    'id': 'x',
-    'tags': [{
-        "type": "literal_or",
-        "tagk": "host",
-        "filter": "web01",
-        "groupBy": False
-    }]
-}
+filters = [
+    {
+        'id': 'x',
+        'tags': [{
+            "type": "literal_or",
+            "tagk": "host",
+            "filter": "web01",
+            "groupBy": False
+        }]
+    },
+    {
+        'id': 'y',
+        'tags': [{
+            "type": "regxp",
+            "tagk": "h",
+            "filter": "web02",
+            "groupBy": True
+        }]
+    },
+]
 
 tags = {
     "host": "*",
@@ -57,9 +68,22 @@ rate_options = {
     # 'dropResets': True,
 }
 
+# filters = [
+#      {
+#         "type": "wildcard",
+#         "type": "literal_or",
+#         "tagk": "host",
+#         "tagk": "host",
+#         "filter": "web02*",
+#         "filter": "web01",
+#         "groupBy": True,
+#         "groupBy": False
+#     },
+# ]
+
 # d = c.query(metric=metric, tsuids=tsuids, rate=False,
 #             start=start, end=end, tags={"host": "web02"},
-#             aggregator='sum', ms=True, show_tsuids=False)
+#             aggregator='sum', ms=True, show_tsuids=False, filters=filters)
 
 # dd = c.delete(metric=metric, tsuids=tsuids, rate=False,
 #               start=start, end=end, tags={"host": "web02"},
