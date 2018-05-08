@@ -315,6 +315,21 @@ class TsdbConnector(object):
         """
         return suggest.suggest(self._host, self._port, self._protocol, **kwargs)
 
+    def metrics(self, **kwargs):
+        """
+        give a list of available metrics
+
+        :param kwargs: dict
+               max:
+                    The maximum number of suggested results to return. Must be greater than 0
+
+               regxp:
+                    Regex pattern to matrics have to satisfied
+
+        :return: json
+        """
+        return suggest.metrics(self._host, self._port, self._protocol, **kwargs)
+
     def parameters_serializer(self):
         return {
             'host': self._host,

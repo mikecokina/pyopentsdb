@@ -16,7 +16,7 @@ data = [
     #     }
     # },
     {
-        "metric": "sys.cpu.nice",
+        "metric": "etc.cpu.nice",
         "timestamp": 1346846403,
         "value": 8,
         "tags": {
@@ -68,5 +68,5 @@ rate_options = {
 # print(d[0]['dps'])
 
 # print(json.dumps(c.version(), indent=4))
-print(c.suggest(type='metrics'))
+print(c.metrics(regxp='(etc).*'))
 
