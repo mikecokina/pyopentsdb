@@ -1,22 +1,36 @@
 import requests
 import json
+from pytsdb import errors
 
 def tsdb_configuration(host, port, protocol):
     url = api_url(host, port, protocol, pointer='CONFIG')
-    response = requests.get(url)
 
+    try:
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        raise errors.TsdbConnectionError('Cannot connect to host')
+
+    # todo: single function handle request response across entire project
     if response.status_code in [200]:
         return json.loads(response.content.decode())
+    elif response.status_code in [400]:
+        raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
 
     raise Exception('unknown error')
 
 
 def filters(host, port, protocol):
     url = api_url(host, port, protocol, pointer='FILTERS')
-    response = requests.get(url)
+
+    try:
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        raise errors.TsdbConnectionError('Cannot connect to host')
 
     if response.status_code in [200]:
         return json.loads(response.content.decode())
+    elif response.status_code in [400]:
+        raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
 
     # todo: change uknown error to error w/ more informative value
     raise Exception('unknown error')

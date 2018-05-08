@@ -1,5 +1,6 @@
 import requests
 import json
+from pytsdb import errors
 
 def aggregators(host, port, protocol):
     """
@@ -11,7 +12,10 @@ def aggregators(host, port, protocol):
     :return: list
     """
     url = api_url(host, port, protocol)
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        raise errors.TsdbConnectionError('Cannot connect to host')
 
     if response.status_code in [200]:
         return json.loads(response.content.decode())
