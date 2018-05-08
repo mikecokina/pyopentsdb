@@ -5,6 +5,7 @@ from pytsdb import query
 from pytsdb import stats
 from pytsdb import version
 from pytsdb import suggest
+from pytsdb import dropcaches
 import warnings
 
 
@@ -317,7 +318,8 @@ class TsdbConnector(object):
 
     def metrics(self, **kwargs):
         """
-        give a list of available metrics
+
+        Hekper function that give a list of available metrics
 
         :param kwargs: dict
                max:
@@ -336,6 +338,15 @@ class TsdbConnector(object):
             'port': self._port,
             'protocol': self._protocol
         }
+
+    def dropcaches(self):
+        """
+        This endpoint purges the in-memory data cached in OpenTSDB. This includes all UID to name
+        and name to UID maps for metrics, tag names and tag values.
+
+        :return: json
+        """
+        return dropcaches.dropcaches(self._host, self._port, self._protocol)
 
 
 def connect(host, port, **kwargs):

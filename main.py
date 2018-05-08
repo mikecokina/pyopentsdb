@@ -68,5 +68,6 @@ rate_options = {
 # print(d[0]['dps'])
 
 # print(json.dumps(c.version(), indent=4))
-print(c.metrics(regxp='(etc).*'))
+# print(c.metrics(regxp='(etc).*'))
+print(c.dropcaches())
 
