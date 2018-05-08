@@ -6,6 +6,7 @@ from pytsdb import stats
 from pytsdb import version
 from pytsdb import suggest
 from pytsdb import dropcaches
+from pytsdb import serializers
 import warnings
 
 
@@ -347,6 +348,16 @@ class TsdbConnector(object):
         :return: json
         """
         return dropcaches.dropcaches(self._host, self._port, self._protocol)
+
+    def serializers(self):
+        """
+        This endpoint lists the serializer plugins loaded by the running TSD. Information
+        given includes the name, implemented methods, content types and methods
+
+        :return: json
+        """
+
+        return serializers.serializers(self._host, self._port, self._protocol)
 
 
 def connect(host, port, **kwargs):
