@@ -2,6 +2,7 @@ from pytsdb import aggregators
 from pytsdb import config
 from pytsdb import put
 from pytsdb import query
+from pytsdb import stats
 import warnings
 
 
@@ -230,6 +231,56 @@ class TsdbConnector(object):
         :return: json
         """
         return config.filters(self._host, self._port, self._protocol)
+
+    def stats(self):
+        """
+        This endpoint provides a list of statistics for the running TSD.
+        Sub endpoints return details about other TSD components such as the JVM,
+        thread states or storage client. All statistics are read only.
+
+        :return: json
+        """
+        return stats.stats(self._host, self._port, self._protocol)
+
+    def jvm_stats(self):
+        """
+        The threads endpoint is used for debugging the TSD's JVM process and includes
+        stats about the garbage collector, system load and memory usage. (v2.2)
+
+        :return: json
+        """
+        return stats.jvm(self._host, self._port, self._protocol)
+
+    def query_stats(self):
+        """
+        This endpoint can be used for tracking and troubleshooting queries executed
+        against a TSD. It maintains an unbounded list of currently executing
+        queries as well as a list of up to 256 completed queries (rotating the oldest
+        queries out of memory). Information about each query includes the
+        original query, request headers, response code, timing and an exception
+        if thrown. (v2.2)
+        :return: json
+        """
+        return stats.query(self._host, self._port, self._protocol)
+
+    def region_clients(self):
+        """
+        Returns information about the various HBase region server clients in AsyncHBase.
+        This helps to identify issues with a particular region server. (v2.2)
+
+        :return json
+        """
+        return stats.region_clients(self._host, self._port, self._protocol)
+
+    def threads(self):
+        """
+        The threads endpoint is used for debugging the TSD and providing insight
+        into the state and execution of various threads without having to resort
+        to a JStack trace. (v2.2)
+
+        :return: json
+        """
+        return stats.threads(self._host, self._port, self._protocol)
 
     def parameters_serializer(self):
         return {

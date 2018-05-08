@@ -1,5 +1,6 @@
 from pytsdb import pytsdb
 from datetime import datetime
+import json
 
 
 c = pytsdb.connect(host='158.197.204.202', port='4242')
@@ -55,14 +56,16 @@ rate_options = {
     # 'dropResets': True,
 }
 
-d = c.query(metric=metric, tsuids=tsuids, rate=False,
-            start=start, end=end, tags={"host": "web02"},
-            aggregator='sum', ms=True, show_tsuids=False)
+# d = c.query(metric=metric, tsuids=tsuids, rate=False,
+#             start=start, end=end, tags={"host": "web02"},
+#             aggregator='sum', ms=True, show_tsuids=False)
 
 # dd = c.delete(metric=metric, tsuids=tsuids, rate=False,
 #               start=start, end=end, tags={"host": "web02"},
 #               aggregator='sum', ms=True, show_tsuids=False)
 
 
-print(d[0]['dps'])
+# print(d[0]['dps'])
+
+print(json.dumps(c.threads(), indent=4))
 
