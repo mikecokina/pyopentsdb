@@ -1,3 +1,3 @@
 # pytsdb
 
-Python adapter for OpenTSDB HTTP APIs
+#### Python adapter for OpenTSDB HTTP APIs
