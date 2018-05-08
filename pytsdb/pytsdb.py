@@ -319,7 +319,7 @@ class TsdbConnector(object):
     def metrics(self, **kwargs):
         """
 
-        Hekper function that give a list of available metrics
+        Helper function that give a list of available metrics
 
         :param kwargs: dict
                max:
