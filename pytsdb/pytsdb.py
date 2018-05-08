@@ -219,6 +219,10 @@ class TsdbConnector(object):
         """
         return query.query(self._host, self._port, self._protocol, **kwargs)
 
+    def query_exp(self, **kwargs):
+        return query.exp(self._host, self._port, self._protocol, **kwargs)
+        pass
+
     def delete(self, **kwargs):
         """
         Enables deletion of data matching query. Use same the kwargs used for query

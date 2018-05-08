@@ -29,14 +29,15 @@ data = [
 
 start = datetime(2000, 1, 1, 23, 0, 0, 0)
 end = datetime(2018, 1, 1, 0, 0, 0, 0)
-filters = [
-    {
+filters = {
+    'id': 'x',
+    'tags': [{
         "type": "literal_or",
         "tagk": "host",
         "filter": "web01",
         "groupBy": False
-    },
-]
+    }]
+}
 
 tags = {
     "host": "*",
@@ -69,5 +70,13 @@ rate_options = {
 
 # print(json.dumps(c.version(), indent=4))
 # print(c.metrics(regxp='(etc).*'))
-print(json.dumps(c.serializers(), indent=4))
+# print(json.dumps(c.serializers(), indent=4))
+print(json.dumps(c.query_exp(
+    start=datetime(2010, 1, 1),
+    aggregator='none',
+    end=datetime(2018, 1, 1),
+    filters=filters
+
+
+), indent=4))
 
