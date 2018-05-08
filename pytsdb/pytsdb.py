@@ -3,6 +3,7 @@ from pytsdb import config
 from pytsdb import put
 from pytsdb import query
 from pytsdb import stats
+from pytsdb import version
 import warnings
 
 
@@ -281,6 +282,14 @@ class TsdbConnector(object):
         :return: json
         """
         return stats.threads(self._host, self._port, self._protocol)
+
+    def version(self):
+        """
+        This endpoint returns information about the running version of OpenTSDB.
+
+        :return: json
+        """
+        return version.version(self._host, self._port, self._protocol)
 
     def parameters_serializer(self):
         return {

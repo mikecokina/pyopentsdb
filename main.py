@@ -67,5 +67,5 @@ rate_options = {
 
 # print(d[0]['dps'])
 
-print(json.dumps(c.threads(), indent=4))
+print(json.dumps(c.version(), indent=4))
 
