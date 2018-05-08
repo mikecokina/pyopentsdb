@@ -15,7 +15,7 @@ class TsdbConnector(object):
         self._host = host
         self._port = port
         self._protocol = kwargs.get('protocol', 'http')
-        self._config = self.parameters_serializer()
+        self._config = self._parameters_serializer()
 
     def aggregators(self):
         """
@@ -238,7 +238,7 @@ class TsdbConnector(object):
 
         :return: json
         """
-        return config.filters(self._host, self._port, self._protocol)
+        return config.filters(**self._config)
 
     def stats(self):
         """
@@ -248,7 +248,7 @@ class TsdbConnector(object):
 
         :return: json
         """
-        return stats.stats(self._host, self._port, self._protocol)
+        return stats.stats(**self._config)
 
     def jvm_stats(self):
         """
@@ -257,7 +257,7 @@ class TsdbConnector(object):
 
         :return: json
         """
-        return stats.jvm(self._host, self._port, self._protocol)
+        return stats.jvm(**self._config)
 
     def query_stats(self):
         """
@@ -269,7 +269,7 @@ class TsdbConnector(object):
         if thrown. (v2.2)
         :return: json
         """
-        return stats.query(self._host, self._port, self._protocol)
+        return stats.query(**self._config)
 
     def region_clients(self):
         """
@@ -278,7 +278,7 @@ class TsdbConnector(object):
 
         :return json
         """
-        return stats.region_clients(self._host, self._port, self._protocol)
+        return stats.region_clients(**self._config)
 
     def threads(self):
         """
@@ -288,7 +288,7 @@ class TsdbConnector(object):
 
         :return: json
         """
-        return stats.threads(self._host, self._port, self._protocol)
+        return stats.threads(**self._config)
 
     def version(self):
         """
@@ -296,7 +296,7 @@ class TsdbConnector(object):
 
         :return: json
         """
-        return version.version(self._host, self._port, self._protocol)
+        return version.version(**self._config)
 
     def suggest(self, **kwargs):
         """
@@ -337,13 +337,6 @@ class TsdbConnector(object):
         """
         return suggest.metrics(self._host, self._port, self._protocol, **kwargs)
 
-    def parameters_serializer(self):
-        return {
-            'host': self._host,
-            'port': self._port,
-            'protocol': self._protocol
-        }
-
     def dropcaches(self):
         """
         This endpoint purges the in-memory data cached in OpenTSDB. This includes all UID to name
@@ -351,7 +344,7 @@ class TsdbConnector(object):
 
         :return: json
         """
-        return dropcaches.dropcaches(self._host, self._port, self._protocol)
+        return dropcaches.dropcaches(**self._config)
 
     def serializers(self):
         """
@@ -361,7 +354,14 @@ class TsdbConnector(object):
         :return: json
         """
 
-        return serializers.serializers(self._host, self._port, self._protocol)
+        return serializers.serializers(**self._config)
+
+    def _parameters_serializer(self):
+        return {
+            'host': self._host,
+            'port': self._port,
+            'protocol': self._protocol
+        }
 
 
 def connect(host, port, **kwargs):
