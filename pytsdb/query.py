@@ -259,8 +259,14 @@ def exp(host, port, protocol, **kwargs):
         raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
 
 
+def gexp(host, port, protocol, **kwargs):
+    pass
+
+
 def api_url(host, port, protocol, pointer):
     if pointer == 'QUERY':
         return '{}://{}:{}/api/query/'.format(protocol, host, port)
     elif pointer == 'EXP':
         return '{}://{}:{}/api/query/exp/'.format(protocol, host, port)
+    elif pointer == 'GEXP':
+        return '{}://{}:{}/api/query/gexp/'.format(protocol, host, port)
