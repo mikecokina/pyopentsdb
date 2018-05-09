@@ -101,8 +101,8 @@ filters = [
         'tags': [{
             "type": "literal_or",
             "tagk": "host",
-            "filter": "web01",
-            "groupBy": False
+            "filter": "web02",
+            "groupBy": True
         }]
     },
     {
@@ -111,7 +111,7 @@ filters = [
             "type": "literal_or",
             "tagk": "host",
             "filter": "web02",
-            "groupBy": False
+            "groupBy": True
         }]
     },
 ]
@@ -136,17 +136,25 @@ metrics = [
 expressions = [
        {
            "id": "e1",
-           "expr": "a + b"
+           "expr": "a + b",
+           "join": {
+                "operator": "union"
+           }
        }
-
 ]
 
 outputs =[
       {"id": "e1"},
     ]
 
+downsampler = {
+    "interval":"2s",
+    "aggregator":"max"
+}
+
 print(json.dumps(c.query_exp(
     start=datetime(1999, 1, 1),
+    downsampler=downsampler,
     aggregator='none',
     end=datetime(2018, 1, 1),
     filters=filters,

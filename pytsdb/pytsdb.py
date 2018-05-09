@@ -220,6 +220,207 @@ class TsdbConnector(object):
         return query.query(self._host, self._port, self._protocol, **kwargs)
 
     def query_exp(self, **kwargs):
+        """
+        This endpoint allows for querying data using expressions. The query is broken up into different sections.
+
+        Two set operations (or Joins) are allowed. The union of all time series ore the intersection.
+
+        For example we can compute "a + b" with a group by on the host field. Both metrics queried alone
+        would emit a time series per host, e.g. maybe one for "web01", "web02" and "web03". Lets say
+        metric "a" has values for all 3 hosts but metric "b" is missing "web03".
+
+        With the intersection operator, the expression will effectively add "a.web01 + b.web01" and "a.web02 + b.web02"
+        but will skip emitting anything for "web03". Be aware of this if you see fewer outputs that you expected
+        or you see errors about no series available after intersection.
+
+        With the union operator the expression will add the web01 and web02 series but for metric "b",
+        it will substitute the metric's fill policy value for the results.
+
+
+        :param kwargs: dict
+               start: datetime
+                    The start time for the query. This may be relative, absolute human readable or absolute Unix Epoch.
+
+               aggregator: str
+                    The global aggregation function to use for all metrics. It may be overridden on a per metric basis.
+
+               end: datetime
+                    The end time for the query. If left out, the end is now
+
+               downsampler: json like
+                    Reduces the number of data points returned. The format is defined below
+
+                        interval: str
+                            A downsampling interval, i.e. what time span to rollup raw
+                            values into. The format is <#><unit>, e.g. 15m
+
+                        aggregator: str
+                            The aggregation function to use for reducing the data points
+
+                        fillPolicy: json like
+                            A policy to use for filling buckets that are missing data points
+
+                                policy: str
+                                    The name of a policy to use. The values are listed in the table below
+
+                                value: double
+                                    For scalar fills, an optional value that can be used during substitution
+
+                    example:
+                        downsampler = {
+                            "interval":"15m",
+                            "aggregator":"max"
+                        }
+
+               filters: json
+                    Filters are for selecting various time series based on the tag keys and values.
+                    At least one filter must be specified (for now) with at least an aggregation
+                    function supplied. Fields include:
+
+                        id: str
+                            A unique ID for the filter. Cannot be the same as any metric or expression ID
+
+                        tags: json
+                            A list of filters on tag values
+
+                                type; str
+                                    The name of the filter from the API
+
+                                tagk: str
+                                    The tag key name such as host or colo that we filter on
+
+                                filter: str
+                                    The value to filter on. This depends on the filter in use. See the API for details
+
+                                groupBy: bool
+                                    Whether or not to group results by the tag values matching this filter.
+                                    E.g. grouping by host will return one result per host. Not grouping by host
+                                    would aggregate (using the aggregation function) all results for the metric
+                                    into one series
+
+                    example:
+                        filters = [
+                            {
+                                'id': 'x',
+                                'tags': [{
+                                    "type": "literal_or",
+                                    "tagk": "host",
+                                    "filter": "web02",
+                                    "groupBy": True
+                                }]
+                            },
+                            {
+                                'id': 'y',
+                                'tags': [{
+                                    "type": "literal_or",
+                                    "tagk": "host",
+                                    "filter": "web02",
+                                    "groupBy": True
+                                }]
+                            },
+                        ]
+
+               metrics: json
+                    The metrics list determines which metrics are included in the expression.
+                    There must be at least one metric.
+
+                    id: str
+                        A unique ID for the metric. This MUST be a simple string, no punctuation or spaces
+
+                    filter: str
+                        The filter id to use when fetching this metric. It must match a filter in the filters array
+
+                    metric: str
+                        The name of a metric in OpenTSDB
+
+                    aggregator: str
+                        An optional aggregation function to overload the global function in time for just this metric
+
+                    fillPolicy: json
+                        If downsampling is not used, this can be included to determine what to emit in calculations.
+                        It will also override the downsampling policy (for more information see downsampler)
+
+                    example:
+                        metrics = [
+                           {
+                               "id": "a",
+                               "metric": "etc.cpu.nice",
+                               "filter": "y",
+                               "fillPolicy": {"policy": "NaN"}
+                           },
+                           {
+                               "id": "b",
+                               "metric": "sys.cpu.nice",
+                               "filter": "x",
+                               "fillPolicy": {"policy": "NaN"}
+                           }
+                       ]
+
+               expressions: json
+                    A list of one or more expressions over the metrics. The variables in an expression MUST refer
+                    to either a metric ID field or an expression ID field. Nested expressions are supported
+                    but exceptions will be thrown if a self reference or circular dependency is detected.
+                    So far only basic operations are supported such as addition, subtraction, multiplication,
+                    division, modulo
+
+                    id: str
+                        A unique ID for the expression
+
+                    expr: str
+                        The expression to execute
+
+                    join: str
+                        The set operation or "join" to perform for series across sets.
+
+                            operator: str
+                                The operator to use, either union or intersection
+
+                            useQueryTags: bool
+                                Whether or not to use just the tags explicitly defined
+                                in the filters when computing the join keys
+
+                            includeAggTags: bool
+                                Whether or not to include the tag keys that were aggregated
+                                out of a series in the join key
+
+                    fillPolicy: json
+                        An optional fill policy for the expression when it is used in a nested
+                        expression and doesn't have a value (for more information see downsampler)
+
+                    example:
+                        expressions = [
+                               {
+                                   "id": "e1",
+                                   "expr": "a + b",
+                                   "join": {
+                                        "operator": "union"
+                                   }
+                               }
+                        ]
+
+               outputs: json
+                    These determine the output behavior and allow you to eliminate some expressions from
+                    the results or include the raw metrics. By default, if this section is missing,
+                    all expressions and only the expressions will be serialized. The field is a list of one or more
+                    output objects. More fields will be added later with flags to affect the output.
+
+                    id: str
+                        The ID of the metric or expression
+
+                    alias: str
+                        An optional descriptive name for series
+
+                    example:
+                        outputs =[
+                          {"id": "e1"},
+                        ]
+
+               rate: bool
+                    Whether or not to calculate all metrics as rates, i.e. value per second.
+                    This is computed before expressions.
+
+        :return: json
+        """
         return query.exp(self._host, self._port, self._protocol, **kwargs)
         pass
 
