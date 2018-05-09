@@ -17,8 +17,8 @@ data = [
     # },
     {
         "metric": "etc.cpu.nice",
-        "timestamp": 1346846403,
-        "value": 8,
+        "timestamp": 1346846404,
+        "value": 6,
         "tags": {
            "host": "web02",
            "dc": "lga"
@@ -26,6 +26,7 @@ data = [
     }
 ]
 # c.put(data=data, details=True)
+# exit()
 
 start = datetime(2000, 1, 1, 23, 0, 0, 0)
 end = datetime(2018, 1, 1, 0, 0, 0, 0)
@@ -42,10 +43,10 @@ filters = [
     {
         'id': 'y',
         'tags': [{
-            "type": "regxp",
-            "tagk": "h",
+            "type": "literal_or",
+            "tagk": "host",
             "filter": "web02",
-            "groupBy": True
+            "groupBy": False
         }]
     },
 ]
@@ -55,8 +56,6 @@ tags = {
     "dc": "lga"
 }
 
-tsuids = ["000001000001000003000002000002", "000001000001000001000002000002"]
-tsuids = []
 
 metric = "sys.cpu.nice"
 # metric = None
@@ -95,12 +94,63 @@ rate_options = {
 # print(json.dumps(c.version(), indent=4))
 # print(c.metrics(regxp='(etc).*'))
 # print(json.dumps(c.serializers(), indent=4))
+
+filters = [
+    {
+        'id': 'x',
+        'tags': [{
+            "type": "literal_or",
+            "tagk": "host",
+            "filter": "web01",
+            "groupBy": False
+        }]
+    },
+    {
+        'id': 'y',
+        'tags': [{
+            "type": "literal_or",
+            "tagk": "host",
+            "filter": "web02",
+            "groupBy": False
+        }]
+    },
+]
+
+
+metrics = [
+       {
+           "id": "a",
+           "metric": "etc.cpu.nice",
+           "filter": "y",
+           "fillPolicy": {"policy": "NaN"}
+       },
+       {
+           "id": "b",
+           "metric": "sys.cpu.nice",
+           "filter": "x",
+           "fillPolicy": {"policy": "NaN"}
+       }
+   ]
+
+
+expressions = [
+       {
+           "id": "e1",
+           "expr": "a + b"
+       }
+
+]
+
+outputs =[
+      {"id": "e1"},
+    ]
+
 print(json.dumps(c.query_exp(
-    start=datetime(2010, 1, 1),
+    start=datetime(1999, 1, 1),
     aggregator='none',
     end=datetime(2018, 1, 1),
-    filters=filters
-
-
+    filters=filters,
+    metrics=metrics,
+    expressions=expressions,
+    outputs=outputs
 ), indent=4))
-

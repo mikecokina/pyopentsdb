@@ -18,12 +18,12 @@ def query(host, port, protocol, **kwargs):
     try:
         start = kwargs['start']
     except KeyError:
-        raise KeyError('start is a required argument')
+        raise errors.MissingArgumentsError('start is a required argument')
 
     try:
         aggregator = kwargs['aggregator']
     except KeyError:
-        raise KeyError('aggregator is a required argument')
+        raise errors.MissingArgumentsError('aggregator is a required argument')
 
     end = kwargs.get('end') or None
     ms_resolution = bool(kwargs.get('ms', False))
@@ -133,6 +133,18 @@ def delete(host, port, protocol, **kwargs):
 
 
 def exp(host, port, protocol, **kwargs):
+    """
+
+    :param host: str
+    :param port: str
+    :param protocol: str
+    :param kwargs: json
+    :return:
+    """
+
+    warnings.warn('It seems there is still present bug similar to https://github.com/OpenTSDB/opentsdb/issues/817'
+                  'Please, avoid expressions containig previous expression like [{"id": "e", "expr": "a + b"}, '
+                  '{"id": "e1", "expr": "e + b"}]. It can leads to query with no response.')
 
     q = dict()
 
@@ -150,12 +162,12 @@ def exp(host, port, protocol, **kwargs):
         raise errors.MissingArgumentsError('aggregator is a required argument')
 
     time_json.update({
-        'start': start.timestamp(),
+        'start': int(start.timestamp()),
         'aggregator': aggregator,
     })
 
     if kwargs.get('end'):
-        time_json.update({'end': kwargs.get('end').timestamp()})
+        time_json.update({'end': int(kwargs.get('end').timestamp())})
 
     if kwargs.get('downsampler'):
         # required params in donwsampler object
@@ -175,37 +187,76 @@ def exp(host, port, protocol, **kwargs):
     q.update({'time': time_json})
 
     # filters JSON
-    if kwargs.get('filters'):
-        for filter_object in kwargs.get('filters'):
-            # required param in filters object
-            if not filter_object.get('id'):
-                raise errors.MissingArgumentsError('Missing required argument id in filters object')
-            if filter_object.get('tags'):
-                # required param in filters.tags objects
-                for tags_object in filter_object['tags']:
-                    if not tags_object.get('type') or not tags_object.get('tagk') or not tags_object.get('filter'):
-                        raise errors.MissingArgumentsError('Missing argument type, tagk or '
-                                                           'filter in filters.tags object')
+    if not kwargs.get('filters'):
+        raise errors.MissingArgumentsError('At least one filter must be specified (for now) '
+                                           'with at least an aggregation function supplied.')
+    for filter_object in kwargs.get('filters'):
+        # required param in filters object
+        if not filter_object.get('id'):
+            raise errors.MissingArgumentsError('Missing required argument id in filters object')
+        if filter_object.get('tags'):
+            # required param in filters.tags objects
+            for tags_object in filter_object['tags']:
+                if not tags_object.get('type') or not tags_object.get('tagk') or not tags_object.get('filter'):
+                    raise errors.MissingArgumentsError('Missing argument type, tagk or '
+                                                       'filter in filters.tags object')
+    q.update({'filters': kwargs.get('filters')})
 
-        q.update({'filters': kwargs.get('filters')})
-    return q
+    # metrics JSON
+    if not kwargs.get('metrics'):
+        raise errors.MissingArgumentsError('There must be at least one metric specified.')
 
+    for metric_object in kwargs.get('metrics'):
+        # reqired arguments in metric object
+        if not metric_object.get('id') or not metric_object.get('filter') or not metric_object.get('metric'):
+            raise errors.MissingArgumentsError('Missing id, filter or metric argument in metric object')
 
+        if metric_object.get('fillPolicy'):
+            # required argument in metric object fillPolicy
+            if not metric_object['fillPolicy'].get('policy'):
+                raise errors.MissingArgumentsError('Reqiured argument policy in downsampler.fillPolicy object')
+    q.update({'metrics': kwargs.get('metrics')})
 
+    # todo: check wether contained filter id in metrics match any filter id from filters
 
+    # expressions JSON
+    # todo: check self-reference expressions and reaise error due to warning in this function
+    if not kwargs.get('expressions'):
+        raise errors.MissingArgumentsError('At least on expression over the metrics is required')
 
+    for expression_object in kwargs.get('expressions'):
+        # reqired arguments in expression object
+        if not expression_object.get('id') or not expression_object.get('expr'):
+            raise errors.MissingArgumentsError('Missing id or expr argument in expression object')
 
+        if expression_object.get('fillPolicy'):
+            if not expression_object['fillPolicy'].get('policy'):
+                raise errors.MissingArgumentsError('Reqiured argument policy in one of the expression fillPolicy object')
 
+        if expression_object.get('join'):
+            if not expression_object['join'].get('operator'):
+                raise errors.MissingArgumentsError('Missign argument operator in expession.join object')
 
+    q.update({'expressions': kwargs.get('expressions')})
 
+    # outputs JSON
+    if kwargs.get('outputs'):
+        for output_object in kwargs.get('outputs'):
+            if not output_object.get('id'):
+                raise errors.MissingArgumentsError('Missing argument id in outputs object')
+        q.update({'outputs': kwargs.get('outputs')})
 
+    url = api_url(host, port, protocol, pointer='EXP')
 
+    try:
+        response = requests.post(url, json.dumps(q))
+    except requests.exceptions.ConnectionError:
+        raise errors.TsdbConnectionError('Cannot connect to host')
 
-
-
-
-
-
+    if response.status_code in [200]:
+        return json.loads(response.content.decode())
+    elif response.status_code in [400]:
+        raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
 
 
 def api_url(host, port, protocol, pointer):
