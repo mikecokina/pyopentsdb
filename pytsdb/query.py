@@ -263,6 +263,10 @@ def gexp(host, port, protocol, **kwargs):
     pass
 
 
+def last(host, port, protocol, **kwargs):
+    pass
+
+
 def api_url(host, port, protocol, pointer):
     if pointer == 'QUERY':
         return '{}://{}:{}/api/query/'.format(protocol, host, port)

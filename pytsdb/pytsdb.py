@@ -422,7 +422,12 @@ class TsdbConnector(object):
         :return: json
         """
         return query.exp(self._host, self._port, self._protocol, **kwargs)
-        pass
+
+    def query_gexp(self, **kwargs):
+        return query.gexp(self._host, self._port, self._protocol, **kwargs)
+
+    def query_last(self, **kwargs):
+        return query.last(self._host, self._port, self._protocol, **kwargs)
 
     def delete(self, **kwargs):
         """
