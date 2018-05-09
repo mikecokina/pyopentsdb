@@ -5,6 +5,10 @@ import json
 
 c = pytsdb.connect(host='158.197.204.202', port='4242')
 
+c.aggregators()
+
+exit()
+
 data = [
     # {
     #     "metric": "sys.cpu.nice",

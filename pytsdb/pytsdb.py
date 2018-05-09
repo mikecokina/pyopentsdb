@@ -9,6 +9,8 @@ from pytsdb import dropcaches
 from pytsdb import serializers
 import warnings
 
+warnings.simplefilter('default')
+
 
 class TsdbConnector(object):
     def __init__(self, host, port, **kwargs):
@@ -23,6 +25,7 @@ class TsdbConnector(object):
 
         :return:  json (list)
         """
+        warnings.warn('OpenTSDB endpoint /api/aggregators/ is deprecated', DeprecationWarning)
         return aggregators.aggregators(**self._config)
 
     def config(self):
@@ -454,6 +457,7 @@ class TsdbConnector(object):
 
         :return: json
         """
+        warnings.warn('OpenTSDB endpoint /api/stats/ is deprecated', DeprecationWarning)
         return stats.stats(**self._config)
 
     def jvm_stats(self):
@@ -502,6 +506,7 @@ class TsdbConnector(object):
 
         :return: json
         """
+        warnings.warn('OpenTSDB endpoint /api/version/ is deprecated', DeprecationWarning)
         return version.version(**self._config)
 
     def suggest(self, **kwargs):
@@ -525,9 +530,11 @@ class TsdbConnector(object):
 
         :return: json
         """
+        warnings.warn('OpenTSDB endpoint /api/suggest/ is deprecated', DeprecationWarning)
         return suggest.suggest(self._host, self._port, self._protocol, **kwargs)
 
     def metrics(self, **kwargs):
+        warnings.warn('OpenTSDB endpoint /api/suggest/ is deprecated', DeprecationWarning)
         """
 
         Helper function that give a list of available metrics
@@ -550,6 +557,7 @@ class TsdbConnector(object):
 
         :return: json
         """
+        warnings.warn('OpenTSDB endpoint /api/dropcaches/ is deprecated', DeprecationWarning)
         return dropcaches.dropcaches(**self._config)
 
     def serializers(self):

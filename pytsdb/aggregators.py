@@ -1,6 +1,7 @@
 import requests
 import json
 from pytsdb import errors
+import warnings
 
 def aggregators(host, port, protocol):
     """
