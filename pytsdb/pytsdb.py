@@ -100,11 +100,96 @@ class TsdbConnector(object):
                         An end time for the query. If not supplied, the TSD will assume the local system time on the server.
                         This may be a relative or absolute timestamp. See Querying or Reading Data for details.
 
-               metric: str
-                        The name of a metric stored in the system
+               metrics: json
+                        The full name of a metric is supplied along with an optional list of tags.
+                        This is optimized for aggregating multiple time series into one result.
 
-               aggregator: str
-                        The name of an aggregation function to use. See /api/aggregators
+
+                        aggregator: str
+                                The name of an aggregation function to use. See /api/aggregators
+
+                        metric: str
+                                The name of a metric stored in the system
+
+                        rate: bool
+                                Whether or not the data should be converted into deltas before returning.
+                                This is useful if the metric is a continuously incrementing counter and you
+                                want to view the rate of change between data points.
+
+                       rateOptions: json
+                                counter: bool
+                                        Whether or not the underlying data is a monotonically increasing
+                                        counter that may roll over
+
+                                counterMax: int
+                                        A positive integer representing the maximum value for the counter.
+
+                                resetValue: int
+                                        An optional value that, when exceeded, will cause the aggregator
+                                        to return a 0 instead of the calculated rate. Useful when data sources
+                                        are frequently reset to avoid spurious spikes.
+
+                                dropResets: bool
+                                        Whether or not to simply drop rolled-over or reset data points.
+
+                       downsample: str
+                                An optional downsampling function to reduce the amount of data returned.
+
+                                examples:
+                                    1h-sum
+                                    30m-avg-nan
+                                    24h-max-zero
+                                    1dc-sum
+                                    0all-sum
+
+                                pattern:
+                                    <Size><Units>-<Aggregator>-<Fill Policy>
+
+                       tags: dict
+                                To drill down to specific timeseries or group results by tag, supply one or more map values
+                                in the same format as the query string. Tags are converted to filters in 2.2.
+                                See the notes below about conversions. Note that if no tags are specified, all metrics
+                                in the system will be aggregated into the results. Deprecated in 2.2
+
+                                example:
+                                    {tagk: tagv}
+
+                       filters: json
+                                type: str
+                                    The name of the filter to invoke. See /api/config/filters
+
+                                tagk: str
+                                    The tag key to invoke the filter on
+
+                                filter:
+                                    The filter expression to evaluate and depends on the filter being used
+
+                                groupBy: bool
+                                    Whether or not to group the results by each value matched by the filter.
+                                    By default all values matching the filter will be aggregated into a single series.
+
+                                example:
+                                    filters = [
+                                    {
+                                        "type": "wildcard",
+                                        "tagk": "host",
+                                        "filter": "web01*",
+                                        "groupBy": False
+                                    }]
+
+                       explicitTags: bool
+                                Returns the series that include only the tag keys provided in the filters.
+
+
+               tsuids: json
+                       A list of one or more TSUIDs that share a common metric. This is optimized for fetching
+                       individual time series where aggregation is not required.
+
+                       aggregator: str
+                                The name of an aggregation function to use. See /api/aggregators
+
+                       tsuids:
+                                Simply pass a list of one or more hexadecimal encoded TSUIDs separated by commas:
 
                ms: bool
                         Whether or not to output data point timestamps in milliseconds or seconds.
@@ -149,74 +234,6 @@ class TsdbConnector(object):
 
                use_calendar: bool
                         Whether or not use the calendar based on the given timezone for downsampling intervals
-
-               filters: json
-                        type: str
-                            The name of the filter to invoke. See /api/config/filters
-
-                        tagk: str
-                            The tag key to invoke the filter on
-
-                        filter:
-                            The filter expression to evaluate and depends on the filter being used
-
-                        groupBy: bool
-                            Whether or not to group the results by each value matched by the filter.
-                            By default all values matching the filter will be aggregated into a single series.
-
-                        example:
-                            filters = [
-                            {
-                                "type": "wildcard",
-                                "tagk": "host",
-                                "filter": "web01*",
-                                "groupBy": False
-                            }]
-
-               tags: dict
-                        To drill down to specific timeseries or group results by tag, supply one or more map values
-                        in the same format as the query string. Tags are converted to filters in 2.2.
-                        See the notes below about conversions. Note that if no tags are specified, all metrics
-                        in the system will be aggregated into the results. Deprecated in 2.2
-
-                        example:
-                            {tagk: tagv}
-
-               explicit_tags: bool
-                        Returns the series that include only the tag keys provided in the filters.
-
-               downsample: str
-                        An optional downsampling function to reduce the amount of data returned.
-
-                        examples:
-                            1h-sum
-                            30m-avg-nan
-                            24h-max-zero
-                            1dc-sum
-                            0all-sum
-
-                        pattern:
-                            <Size><Units>-<Aggregator>-<Fill Policy>
-
-               rate: bool
-                        Whether or not the data should be converted into deltas before returning.
-                        This is useful if the metric is a continuously incrementing counter and you
-                        want to view the rate of change between data points.
-
-               rate_options: json
-                        counter: bool
-                            Whether or not the underlying data is a monotonically increasing counter that may roll over
-
-                        counterMax: int
-                            A positive integer representing the maximum value for the counter.
-
-                        resetValue: int
-                            An optional value that, when exceeded, will cause the aggregator to return a 0 instead
-                            of the calculated rate. Useful when data sources are frequently reset to avoid spurious spikes.
-
-                        dropResets: bool
-                            Whether or not to simply drop rolled-over or reset data points.
-
 
         :return: json
         """
@@ -430,6 +447,8 @@ class TsdbConnector(object):
         return query.gexp(self._host, self._port, self._protocol, **kwargs)
 
     def query_last(self, **kwargs):
+        warnings.warn('You must set either tsd.core.meta.enable_tsuid_tracking '
+                      'or tsd.core.meta.enable_realtime_ts in tsdb configuration')
         return query.last(self._host, self._port, self._protocol, **kwargs)
 
     def delete(self, **kwargs):

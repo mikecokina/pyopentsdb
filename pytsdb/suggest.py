@@ -42,7 +42,6 @@ def metrics(host, port, protocol, **kwargs):
     :param kwargs: dict
     :return: json
     """
-
     kwargs.update({
         'type': 'metrics',
         'q': '',

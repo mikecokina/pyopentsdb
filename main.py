@@ -5,9 +5,6 @@ import json
 
 c = pytsdb.connect(host='158.197.204.202', port='4242')
 
-c.aggregators()
-
-exit()
 
 data = [
     # {
@@ -84,10 +81,20 @@ rate_options = {
 #     },
 # ]
 
-# d = c.query(metric=metric, tsuids=tsuids, rate=False,
-#             start=start, end=end, tags={"host": "web02"},
-#             aggregator='sum', ms=True, show_tsuids=False, filters=filters)
 
+metrics = [
+    {
+        'aggregator': 'none',
+        "metric": "etc.cpu.nice",
+    }
+]
+
+
+d = c.query(start=datetime(2009, 1, 1), metrics=metrics)
+exit()
+
+
+#
 # dd = c.delete(metric=metric, tsuids=tsuids, rate=False,
 #               start=start, end=end, tags={"host": "web02"},
 #               aggregator='sum', ms=True, show_tsuids=False)

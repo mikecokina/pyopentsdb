@@ -20,11 +20,7 @@ def query(host, port, protocol, **kwargs):
     except KeyError:
         raise errors.MissingArgumentsError('start is a required argument')
 
-    try:
-        aggregator = kwargs['aggregator']
-    except KeyError:
-        raise errors.MissingArgumentsError('aggregator is a required argument')
-
+    # general driven arguments
     end = kwargs.get('end') or None
     ms_resolution = bool(kwargs.get('ms', False))
     show_tsuids = bool(kwargs.get('show_tsuids', False))
@@ -40,7 +36,6 @@ def query(host, port, protocol, **kwargs):
     if delete_match:
         warnings.warn('To data deletion tsd.http.query.allow_delete has to be set')
 
-    # basic
     params = {
         'start': '{}'.format(int(start.timestamp())),
         'msResolution': ms_resolution,
@@ -59,49 +54,32 @@ def query(host, port, protocol, **kwargs):
     if end:
         params.update({'end': int(end.timestamp())})
 
-    q, mq, tq = dict(), dict(), dict()
-    queries = list()
+    # todo: check in some way whether final json satisfy expected structure
 
-    q.update({'aggregator': aggregator})
-    q.update({'explicitTags': bool(kwargs.get('explicit_tags', False))})
-    q.update({'rate': bool(kwargs.get('rate', False))})
-    # todo: check, whether rateOptions is working or not
-    if kwargs.get('rate_options'):
-        q.update({'rateOptions': kwargs.get('rate_options')})
+    # required query params
+    if not kwargs.get('metrics') and not kwargs.get('tsuids'):
+        raise errors.MissingArgumentsError('Missing argument metrics or tsuids in query')
 
-    if kwargs.get('tags'):
-        q.update({'tags': kwargs.get('tags')})
+    if kwargs.get('metrics'):
+        for metric_object in kwargs['metrics']:
+            if not metric_object.get('metric') or not metric_object.get('aggregator'):
+                raise errors.MissingArgumentsError('Missing argument metric or aggregator in metrics object')
 
-    if kwargs.get('filters'):
-        for filter_object in kwargs.get('filters'):
-            if not filter_object.get('type') or not filter_object.get('tagk') or not filter_object.get('filter'):
-                raise errors.MissingArgumentsError('Missing argument type, tagk or filter in filters item object')
-
-        q.update({'filters': kwargs.get('filters')})
-
-    if kwargs.get('downsample'):
-        q.update({'downsample': kwargs.get('downsample')})
-
-    if kwargs.get('metric'):
-        mq = q.copy()
-        mq.update(
-            {
-                'metric': kwargs.get('metric'),
-            }
-        )
-        queries.append(mq)
+            if metric_object.get('filters'):
+                for metric_filter in metric_object['filters']:
+                    if not metric_filter.get('type') or not metric_filter.get('tagk') \
+                            or not metric_filter.get('filter'):
+                        raise errors.MissingArgumentsError('Missing argument type, tagk or filter in filters object')
 
     if kwargs.get('tsuids'):
-        tq = q.copy()
-        tq.update(
-            {
-                'tsuids': kwargs['tsuids'],
-            }
-        )
-        queries.append(tq)
+        if not kwargs['tsuids'][0].get('aggregator'):
+            raise errors.MissingArgumentsError('Missing argument aggregator in tsuids query object')
 
-    if not queries:
-        raise errors.MissingArgumentsError('Missing metrics or tsuids to resolve')
+        if not kwargs['tsuids'][0].get('tsuids'):
+            raise errors.MissingArgumentsError('Missing argument tsuids in tsuids query object')
+
+    queries = kwargs.get('metrics') + kwargs.get('tsuids') if kwargs.get('metrics') and kwargs.get('tsuids') \
+        else kwargs.get('metrics') if kwargs.get('metrics') else kwargs.get('tsuids')
 
     params.update({'queries': queries})
 
