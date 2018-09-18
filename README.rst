@@ -1,7 +1,7 @@
 Pytsdb
 ========
 
-Python wrapper over OpenTSDB HTTP API
+Python adapter for OpenTSDB HTTP APIs
 
 Usage:
 ------
