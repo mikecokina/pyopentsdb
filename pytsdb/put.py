@@ -1,17 +1,14 @@
 from pytsdb.utils import request_post
+from pytsdb import errors
 
 
-def validate_put_data(**kwargs):
-    # [{
-    #     "metric": "sys.exit.metric",
-    #     "timestamp": 1346846400,
-    #     "value": 18,
-    #     "tags": {
-    #         "host": "web01",
-    #         "dc": "lga"
-    #     }
-    # }]
-    pass
+def validate_put_data(data):
+    if isinstance(data, dict):
+        data = [data]
+
+    for d in data:
+        if not d.get('metric') or not not d.get('timestamp') or not not d.get('value') or not not d.get('tags'):
+            raise errors.MissingArgumentError("Missing argument/s in put data")
 
 
 def put(host, port, protocol, timeout, data, **kwargs):
@@ -37,6 +34,7 @@ def put(host, port, protocol, timeout, data, **kwargs):
     :return: dict
     """
 
+    validate_put_data(data)
     summary = kwargs.get('summary', False)
     details = kwargs.get('details', False)
     sync = kwargs.get('sync', False)
