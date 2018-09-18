@@ -1,6 +1,7 @@
-from pytsdb import request
+from pytsdb import utils
 
-def stats(host, port, protocol):
+
+def stats(host, port, protocol, timeout):
     """
     This endpoint provides a list of statistics for the running TSD.
     Sub endpoints return details about other TSD components such as the JVM,
@@ -9,13 +10,14 @@ def stats(host, port, protocol):
     :param host: str
     :param port: str
     :param protocol: str
-    :return: json
+    :param timeout: int/float/tuple
+    :return: dict
     """
     url = api_url(host, port, protocol, pointer='STATS')
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
-def jvm(host, port, protocol):
+def jvm(host, port, protocol, timeout):
     """
     The threads endpoint is used for debugging the TSD's JVM process and includes
     stats about the garbage collector, system load and memory usage. (v2.2)
@@ -23,14 +25,15 @@ def jvm(host, port, protocol):
     :param host: str
     :param port: str
     :param protocol: str
-    :return: json
+    :param timeout: int/float/tuple
+    :return: dict
     """
 
     url = api_url(host, port, protocol, pointer='JVM')
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
-def query(host, port, protocol):
+def query(host, port, protocol, timeout):
     """
     This endpoint can be used for tracking and troubleshooting queries executed
     against a TSD. It maintains an unbounded list of currently executing
@@ -42,13 +45,14 @@ def query(host, port, protocol):
     :param host: str
     :param port: str
     :param protocol: str
+    :param timeout: int/float/tuple
     :return: json
     """
     url = api_url(host, port, protocol, pointer='QUERY')
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
-def region_clients(host, port, protocol):
+def region_clients(host, port, protocol, timeout):
     """
     Returns information about the various HBase region server clients in AsyncHBase.
     This helps to identify issues with a particular region server. (v2.2)
@@ -56,13 +60,14 @@ def region_clients(host, port, protocol):
     :param host: str
     :param port: str
     :param protocol: str
+    :param timeout: int/float/tuple
     :return: json
     """
     url = api_url(host, port, protocol, pointer='REGION_CLIENTS')
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
-def threads(host, port, protocol):
+def threads(host, port, protocol, timeout):
     """
     The threads endpoint is used for debugging the TSD and providing insight
     into the state and execution of various threads without having to resort
@@ -71,10 +76,11 @@ def threads(host, port, protocol):
     :param host: str
     :param port: str
     :param protocol: str
+    :param timeout: int/float/tuple
     :return: json
     """
     url = api_url(host, port, protocol, pointer='THREADS')
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
 def api_url(host, port, protocol, pointer):

@@ -1,31 +1,22 @@
-import requests
-import json
-from pytsdb import errors
-import warnings
+from pytsdb import utils
 
-def aggregators(host, port, protocol):
+
+def aggregators(host, port, protocol, timeout):
     """
     Return all available tsdb aggregators
-
     :param host: str
     :param port: str
     :param protocol: str
+    :param timeout: int/float/tuple
     :return: list
     """
     url = api_url(host, port, protocol)
-    try:
-        response = requests.get(url)
-    except requests.exceptions.ConnectionError:
-        raise errors.TsdbConnectionError('Cannot connect to host')
-
-    if response.status_code in [200]:
-        return json.loads(response.content.decode())
+    return utils.request_get(url, timeout)
 
 
 def api_url(host, port, protocol):
     """
     Make api url for aggregators
-
     :param host: str
     :param port: str
     :param protocol: str

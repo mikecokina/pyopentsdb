@@ -1,16 +1,17 @@
-from pytsdb import request
+from pytsdb import utils
 
 
-def serializers(host, port, protocol):
+def serializers(host, port, protocol, timeout):
     """
 
     :param host: str
     :param port: str
     :param protocol: str
+    :param timeout: int/float/tuple
     :return: json
     """
     url = api_url(host, port, protocol)
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
 def api_url(host, port, protocol):

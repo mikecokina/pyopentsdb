@@ -1,24 +1,76 @@
-import requests
-import json
+from queue import Queue
+from queue import Empty
+from threading import Thread
+
 from pytsdb import errors
-import warnings
+from pytsdb.utils import request_post
 
 
-def query(host, port, protocol, **kwargs):
+class IterableQueue(object):
+    """ Transform standard python Queue instance to iterable one"""
+
+    def __init__(self, source_queue):
+        """
+
+        :param source_queue: queue.Queue, (mandatory)
+        """
+        self.source_queue = source_queue
+
+    def __iter__(self):
+        while True:
+            try:
+                yield self.source_queue.get_nowait()
+            except Empty:
+                return
+            
+
+def tsdb_query_metrics_validation(**kwargs):
+    """
+    looking for metric and all related and required arguments in kwargs specified in OpenTSDB http api
+
+    :param kwargs: dict
+    :return:
     """
 
+    # tsdb query kwargs have to contain 'metrics' argument
+    if not kwargs.get('metrics'):
+        raise errors.MissingArgumentError("Missing argument 'metrics' in query")
+
+    # metrics can contain more than one metric in list
+    for metric_object in kwargs['metrics']:
+        # each metric in metrics has to specify aggregator function
+        if not metric_object.get('metric') or not metric_object.get('aggregator'):
+            raise errors.MissingArgumentError("Missing argument 'metric' or 'aggregator' in metrics object")
+
+        # each metric can contain filters
+        if metric_object.get('filters'):
+            for metric_filter in metric_object['filters']:
+                # if filter is presented , it has contain 'type', 'tagk' and 'filter' (filter definition)
+                if not metric_filter.get('type') or not metric_filter.get('tagk') or \
+                        metric_filter.get('filter') is None:
+                    raise errors.MissingArgumentError(
+                        "Missing argument 'type', 'tagk' or 'filter' in filters object")
+
+
+def query(host, port, protocol, timeout, **kwargs):
+    """
     :param host: str
     :param port: str
     :param protocol: str
+    :param timeout: int/float/tuple; requests.request timeout
     :param kwargs: dict
-
-    :return: json
+    :return: dict
     """
 
     try:
         start = kwargs['start']
     except KeyError:
-        raise errors.MissingArgumentsError('start is a required argument')
+        raise errors.MissingArgumentError("'start' is a required argument")
+
+    try:
+        tsdb_query_metrics_validation(**kwargs)
+    except errors.MissingArgumentError as e:
+        raise errors.MissingArgumentError(str(e))
 
     # general driven arguments
     end = kwargs.get('end') or None
@@ -32,9 +84,6 @@ def query(host, port, protocol, **kwargs):
     delete_match = bool(kwargs.get('delete', False))
     timezone = kwargs.get('timezone', 'UTC')
     use_calendar = bool(kwargs.get('use_calendar', False))
-
-    if delete_match:
-        warnings.warn('To data deletion tsd.http.query.allow_delete has to be set')
 
     params = {
         'start': '{}'.format(int(start.timestamp())),
@@ -54,201 +103,92 @@ def query(host, port, protocol, **kwargs):
     if end:
         params.update({'end': int(end.timestamp())})
 
-    # todo: check in some way whether final json satisfy expected structure
-
-    # required query params
-    if not kwargs.get('metrics') and not kwargs.get('tsuids'):
-        raise errors.MissingArgumentsError('Missing argument metrics or tsuids in query')
-
-    if kwargs.get('metrics'):
-        for metric_object in kwargs['metrics']:
-            if not metric_object.get('metric') or not metric_object.get('aggregator'):
-                raise errors.MissingArgumentsError('Missing argument metric or aggregator in metrics object')
-
-            if metric_object.get('filters'):
-                for metric_filter in metric_object['filters']:
-                    if not metric_filter.get('type') or not metric_filter.get('tagk') \
-                            or not metric_filter.get('filter'):
-                        raise errors.MissingArgumentsError('Missing argument type, tagk or filter in filters object')
-
-    if kwargs.get('tsuids'):
-        if not kwargs['tsuids'][0].get('aggregator'):
-            raise errors.MissingArgumentsError('Missing argument aggregator in tsuids query object')
-
-        if not kwargs['tsuids'][0].get('tsuids'):
-            raise errors.MissingArgumentsError('Missing argument tsuids in tsuids query object')
-
-    queries = kwargs.get('metrics') + kwargs.get('tsuids') if kwargs.get('metrics') and kwargs.get('tsuids') \
-        else kwargs.get('metrics') if kwargs.get('metrics') else kwargs.get('tsuids')
-
+    queries = kwargs.get('metrics')
     params.update({'queries': queries})
 
     url = api_url(host, port, protocol, pointer='QUERY')
-    try:
-        response = requests.post(url, json.dumps(params))
-    except requests.exceptions.ConnectionError:
-        raise errors.TsdbConnectionError('Cannot connect to host')
-
-    if response.status_code in [200]:
-        return json.loads(response.content.decode())
-    elif response.status_code in [400]:
-        raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
+    return request_post(url, params, timeout)
 
 
-def delete(host, port, protocol, **kwargs):
+def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency=40):
+    """
+    OpenTSDB /api/query/ concurrency wrapper
+
+    :param protocol: str (mandatory); protocol (http/https)
+    :param port: int (mandatory); OpenTSDB instance port
+    :param host: str (mandatory); OpenTSDB host
+    :param timeout: int/float/tuple; requests.request timeout
+    :param query_chunks: list (mandatory); list of json serializable dicts representing OpenTSDB query
+    :param max_tsdb_concurrency: int (optional), default=40; maximum number of concurrency
+                                                            threads hitting OpenTSDB api
+    :return: dict; json serializable
     """
 
-    :param host: str
-    :param port: str
-    :param protocol: str
-    :param kwargs: dict
+    __WORKER_RUN__ = True
 
-    :return: json
-    """
+    # todo: optimize, in case one of worker fail, terminate execution
+    def tsdb_worker():
+        while __WORKER_RUN__:
+            query_kwargs = query_queue.get()
 
-    kwargs.update({'delete': True})
-    return query(host, port, protocol, **kwargs)
+            if query_kwargs == "TERMINATOR":
+                break
 
+            # if tehre is already at least one (just one) error in queue, terminate all running threads
+            # it is uselles and time consuming to finished rest of queries, if one of them fail
+            if not error_queue.empty():
+                break
 
-def exp(host, port, protocol, **kwargs):
-    """
+            try:
+                result = query(host, port, protocol, timeout, **query_kwargs)
+                result_queue.put(result)
+            except Exception as we:
+                error_queue.put(we)
+                break
 
-    :param host: str
-    :param port: str
-    :param protocol: str
-    :param kwargs: json
-    :return:
-    """
+    n_threads = min(len(query_chunks), max_tsdb_concurrency)
+    query_queue = Queue(maxsize=len(query_chunks) + n_threads)
+    result_queue = Queue(maxsize=len(query_chunks) + n_threads)
+    error_queue = Queue()
 
-    warnings.warn('It seems there is still present bug similar to https://github.com/OpenTSDB/opentsdb/issues/817'
-                  'Please, avoid expressions containig previous expression like [{"id": "e", "expr": "a + b"}, '
-                  '{"id": "e1", "expr": "e + b"}]. It can leads to query with no response.')
-
-    q = dict()
-
-    # time JSON
-    time_json = dict()
-
+    threads = list()
     try:
-        start = kwargs['start']
-    except KeyError:
-        raise errors.MissingArgumentsError('start is a required argument')
+        for q in query_chunks:
+            # valiate all queries in query_chunks
+            tsdb_query_metrics_validation(**q)
+            # add query kwargs to queue for future execution in threads
+            query_queue.put(q)
 
-    try:
-        aggregator = kwargs['aggregator']
-    except KeyError:
-        raise errors.MissingArgumentsError('aggregator is a required argument')
+        for _ in range(n_threads):
+            query_queue.put("TERMINATOR")
 
-    time_json.update({
-        'start': int(start.timestamp()),
-        'aggregator': aggregator,
-    })
+        for _ in range(n_threads):
+            t = Thread(target=tsdb_worker)
+            threads.append(t)
+            t.daemon = True
+            t.start()
 
-    if kwargs.get('end'):
-        time_json.update({'end': int(kwargs.get('end').timestamp())})
+        for t in threads:
+            t.join()
 
-    if kwargs.get('downsampler'):
-        # required params in donwsampler object
-        if not kwargs['downsampler'].get('interval') or not kwargs['downsampler'].get('aggregator'):
-            raise errors.MissingArgumentsError('Reqiured arguments interval and aggregator in downsampler object')
+    except KeyboardInterrupt:
+        raise
+    finally:
+        __WORKER_RUN__ = False
 
-        if kwargs['downsampler'].get('fillPolicy'):
-            # required argument in downsampler.fillPolicy object
-            if not kwargs['downsampler']['fillPolicy'].get('policy'):
-                raise errors.MissingArgumentsError('Reqiured argument policy in downsampler.fillPolicy object')
+    if not error_queue.empty():
+        # if not empty, error_queue has to contain exception from tsdb_worker
+        raise error_queue.get()
 
-        time_json.update({'downsampler': kwargs.get('downsampler')})
+    if result_queue.qsize() != len(query_chunks):
+        # this statement is probably not necessary
+        raise errors.TsdbError("Number of queries and responses is not the same")
 
-    if kwargs.get('rate'):
-        time_json.update({'rate': bool(kwargs.get('rate'))})
-
-    q.update({'time': time_json})
-
-    # filters JSON
-    if not kwargs.get('filters'):
-        raise errors.MissingArgumentsError('At least one filter must be specified (for now) '
-                                           'with at least an aggregation function supplied.')
-    for filter_object in kwargs.get('filters'):
-        # required param in filters object
-        if not filter_object.get('id'):
-            raise errors.MissingArgumentsError('Missing required argument id in filters object')
-        if filter_object.get('tags'):
-            # required param in filters.tags objects
-            for tags_object in filter_object['tags']:
-                if not tags_object.get('type') or not tags_object.get('tagk') or not tags_object.get('filter'):
-                    raise errors.MissingArgumentsError('Missing argument type, tagk or '
-                                                       'filter in filters.tags object')
-    q.update({'filters': kwargs.get('filters')})
-
-    # metrics JSON
-    if not kwargs.get('metrics'):
-        raise errors.MissingArgumentsError('There must be at least one metric specified.')
-
-    for metric_object in kwargs.get('metrics'):
-        # reqired arguments in metric object
-        if not metric_object.get('id') or not metric_object.get('filter') or not metric_object.get('metric'):
-            raise errors.MissingArgumentsError('Missing id, filter or metric argument in metric object')
-
-        if metric_object.get('fillPolicy'):
-            # required argument in metric object fillPolicy
-            if not metric_object['fillPolicy'].get('policy'):
-                raise errors.MissingArgumentsError('Reqiured argument policy in downsampler.fillPolicy object')
-    q.update({'metrics': kwargs.get('metrics')})
-
-    # todo: check wether contained filter id in metrics match any filter id from filters
-
-    # expressions JSON
-    # todo: check self-reference expressions and reaise error due to warning in this function
-    if not kwargs.get('expressions'):
-        raise errors.MissingArgumentsError('At least on expression over the metrics is required')
-
-    for expression_object in kwargs.get('expressions'):
-        # reqired arguments in expression object
-        if not expression_object.get('id') or not expression_object.get('expr'):
-            raise errors.MissingArgumentsError('Missing id or expr argument in expression object')
-
-        if expression_object.get('fillPolicy'):
-            if not expression_object['fillPolicy'].get('policy'):
-                raise errors.MissingArgumentsError('Reqiured argument policy in one of the expression fillPolicy object')
-
-        if expression_object.get('join'):
-            if not expression_object['join'].get('operator'):
-                raise errors.MissingArgumentsError('Missign argument operator in expession.join object')
-
-    q.update({'expressions': kwargs.get('expressions')})
-
-    # outputs JSON
-    if kwargs.get('outputs'):
-        for output_object in kwargs.get('outputs'):
-            if not output_object.get('id'):
-                raise errors.MissingArgumentsError('Missing argument id in outputs object')
-        q.update({'outputs': kwargs.get('outputs')})
-
-    url = api_url(host, port, protocol, pointer='EXP')
-
-    try:
-        response = requests.post(url, json.dumps(q))
-    except requests.exceptions.ConnectionError:
-        raise errors.TsdbConnectionError('Cannot connect to host')
-
-    if response.status_code in [200]:
-        return json.loads(response.content.decode())
-    elif response.status_code in [400]:
-        raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
-
-
-def gexp(host, port, protocol, **kwargs):
-    pass
-
-
-def last(host, port, protocol, **kwargs):
-    pass
+    # make sure any other kind of response code won't be propagated to this place and will be catched and processed
+    # in previous part of code
+    return sum([val for val in IterableQueue(result_queue)], list())
 
 
 def api_url(host, port, protocol, pointer):
     if pointer == 'QUERY':
         return '{}://{}:{}/api/query/'.format(protocol, host, port)
-    elif pointer == 'EXP':
-        return '{}://{}:{}/api/query/exp/'.format(protocol, host, port)
-    elif pointer == 'GEXP':
-        return '{}://{}:{}/api/query/gexp/'.format(protocol, host, port)

@@ -1,16 +1,15 @@
-import requests
-import json
-from pytsdb import errors
 import re
 
+from pytsdb import errors
+from pytsdb import utils
 
-def suggest(host, port, protocol, **kwargs):
+
+def suggest(host, port, protocol, timeout, **kwargs):
     url = api_url(host, port, protocol)
-
     try:
         t = kwargs['type']
     except KeyError:
-        raise KeyError('type is a required argument')
+        raise errors.MissingArgumentError("'type' is a required argument")
 
     params = dict()
     params.update(
@@ -21,45 +20,26 @@ def suggest(host, port, protocol, **kwargs):
         }
     )
 
-    try:
-        response = requests.post(url, json.dumps(params))
-    except requests.exceptions.ConnectionError:
-        raise errors.TsdbConnectionError('Cannot connect to host')
-
-    if response.status_code in [200]:
-        return json.loads(response.content.decode())
-    elif response.status_code in [400]:
-        raise errors.TsdbQueryError(json.dumps(json.loads(response.content.decode()), indent=4))
+    return utils.request_post(url, params, timeout)
 
 
-def metrics(host, port, protocol, **kwargs):
-    """
-    give a list of available metrics
-
-    :param host: str
-    :param port: str
-    :param protocol: str
-    :param kwargs: dict
-    :return: json
-    """
+def metrics(host, port, protocol, timeout, **kwargs):
     kwargs.update({
         'type': 'metrics',
-        'q': '',
+        'q': kwargs.get('q', ''),
         'max': kwargs.get('max', 10000),
     })
 
-    metric_list = suggest(host, port, protocol, **kwargs)
-    regxp = kwargs.get('regxp')
-
-    if regxp:
-        metric_list = [metric for metric in metric_list if re.search(re.compile(regxp), str(metric), flags=0)]
+    metric_list = suggest(host, port, protocol, timeout, **kwargs)
+    regexp = kwargs.get('regexp')
+    if regexp:
+        metric_list = [metric for metric in metric_list if re.search(re.compile(regexp), str(metric), flags=0)]
     return metric_list
 
 
 def api_url(host, port, protocol):
     """
     Make api url to obtain configuration
-
     :param host: str
     :param port: str
     :param protocol: str

@@ -1,21 +1,21 @@
-from pytsdb import request
+from pytsdb import utils
 
 
-def dropcaches(host, port, protocol):
+def dropcaches(host, port, protocol, timeout):
     """
-
     :param host: str
     :param port: str
     :param protocol: str
-    :return: json
+    :param timeout: int/float/tuple
+    :return: dict
     """
     url = api_url(host, port, protocol)
-    return request.generic_request(url)
+    return utils.request_get(url, timeout)
 
 
 def api_url(host, port, protocol):
     """
-    Make api url to obtain configuration
+    Make api url for dropcaches
 
     :param host: str
     :param port: str

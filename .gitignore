@@ -1,3 +1,14 @@
+.idea
+.idea/*
+*.pyc
+*.sqlite3
+*.log
+*.db
+_build
+build/*
+dist/*
+env36/*
+main.py
 env
 env/*
-.idea/*
+main.py
