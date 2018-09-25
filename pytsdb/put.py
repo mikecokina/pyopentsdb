@@ -7,7 +7,7 @@ def validate_put_data(data):
         data = [data]
 
     for d in data:
-        if not d.get('metric') or not not d.get('timestamp') or not not d.get('value') or not not d.get('tags'):
+        if not d.get('metric') or not d.get('timestamp') or not d.get('value') or not d.get('tags'):
             raise errors.MissingArgumentError("Missing argument/s in put data")
 
 
