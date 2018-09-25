@@ -3,7 +3,7 @@ from pytsdb import tsdb
 from pytsdb import errors
 from unittest import mock
 from tests.testutils import get_mock_requests_get, mock_tsdb_error_get, mock_unexpected_error_get
-from tests.testutils import ADHOC_PROTOCOLS, ADHOC_PORTS, ADHOC_HOSTS
+from tests.testutils import GeneralUrlTestCase
 
 
 class AggregatorsTestCase(unittest.TestCase):
@@ -18,15 +18,7 @@ class AggregatorsTestCase(unittest.TestCase):
 
     @mock.patch('requests.get', side_effect=get_mock_requests_get(None))
     def test_url(self, _):
-        hosts = ADHOC_HOSTS
-        ports = ADHOC_PORTS
-        protocols = ADHOC_PROTOCOLS
-
-        for a, b, c in zip(hosts, ports, protocols):
-            expected_url = '{}://{}:{}/api/aggregators/'.format(c, a, b)
-            self._c = tsdb.tsdb_connection(a, b, protocol=c)
-            mock_return_value = self._c.aggregators()
-            self.assertTrue(mock_return_value[-1] == expected_url)
+        GeneralUrlTestCase.test_url(self, "/api/aggregators/", "aggregators")
 
     @mock.patch('requests.get', side_effect=get_mock_requests_get(__TEST_AGGREGATORS__))
     def test_aggregators(self, _):

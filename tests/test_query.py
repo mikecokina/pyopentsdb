@@ -7,7 +7,7 @@ from pytsdb import errors
 from pytsdb.query import tsdb_query_metrics_validation
 
 from tests.testutils import get_mock_requests_post, mock_tsdb_connection_error_post, mock_unexpected_error_post
-from tests.testutils import ADHOC_HOSTS, ADHOC_PORTS, ADHOC_PROTOCOLS
+from tests.testutils import GeneralUrlTestCase
 
 # todo: unify repeating test
 
@@ -55,16 +55,7 @@ class QueryTestCase(unittest.TestCase):
 
     @mock.patch('requests.post', side_effect=get_mock_requests_post(None))
     def test_url(self, _):
-        hosts = ADHOC_HOSTS
-        ports = ADHOC_PORTS
-        protocols = ADHOC_PROTOCOLS
-
-        for a, b, c in zip(hosts, ports, protocols):
-            expected_url = '{}://{}:{}/api/query/'.format(c, a, b)
-            self._c = tsdb.tsdb_connection(a, b, protocol=c)
-            mock_return_value = self._c.query(** QueryTestCase.__ADHOC__QUERY_PARAMS)
-            # url is added ad hoc in testutils
-            self.assertTrue(mock_return_value[-1] == expected_url)
+        GeneralUrlTestCase.test_url(self, "/api/query/", "query", **QueryTestCase.__ADHOC__QUERY_PARAMS)
 
     @mock.patch('requests.post', side_effect=get_mock_requests_post(__TEST_RESPONSE__))
     def test_query(self, _):

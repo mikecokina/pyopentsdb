@@ -1,28 +1,29 @@
 import unittest
-from pytsdb import pytsdb
 from unittest import mock
-from tests.testutils import mock_requests_get
+
+from pytsdb import tsdb
+from tests.testutils import get_mock_requests_get
+from tests.testutils import GeneralUrlTestCase
 
 
-class DropcachesTestCase(unittest.TestCase):
+class TsdbDopcachesTestCase(unittest.TestCase):
+    __TETS_DROPCACHES__ = {
+        "message": "Caches dropped",
+        "status": "200"
+    }
 
     def setUp(self):
         self._host = 'localhost'
         self._port = 5896
         self._protocol = 'mockhttp'
 
-        self._hosts = ['localhost', 'myqeb.com', 'web.kim.com']
-        self._ports = ['201', 22222, 693]
-        self._protocols = ['http', 'https', 'ftp']
+        self._c = tsdb.tsdb_connection(self._host, self._port, protocol=self._protocol)
 
-        self._c = pytsdb.connect(self._host, self._port, protocol=self._protocol)
+    @mock.patch('requests.get', side_effect=get_mock_requests_get(None))
+    def test_url(self, _):
+        GeneralUrlTestCase.test_url(self, "/api/dropcaches/", "dropcaches")
 
-    @mock.patch('requests.get', side_effect=mock_requests_get)
-    def test_dropcaches_url(self, _):
-        for a, b, c in zip(self._hosts, self._ports, self._protocols):
-            expected_url = '{}://{}:{}/api/dropcaches/'.format(c, a, b)
-            self._c = pytsdb.connect(a, b, protocol=c)
-            mock_return_value = self._c.dropcaches()
-
-            self.assertTrue(isinstance(mock_return_value, dict))
-            self.assertTrue(mock_return_value.get('url') == expected_url)
+    @mock.patch('requests.get', side_effect=get_mock_requests_get(__TETS_DROPCACHES__))
+    def test_config(self, _):
+        response = self._c.dropcaches()
+        self.assertEqual(sorted(response), sorted(TsdbDopcachesTestCase.__TETS_DROPCACHES__))

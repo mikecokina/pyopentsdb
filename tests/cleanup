@@ -1,0 +1,17 @@
+#!/bin/bash
+
+START=1514764800
+END=1514851200
+
+declare -a METRICS=("integration_test_metric.sys.cpu.nice" "integration_test_metric.sys.hdd.left" "integration_test_metric.sys.mem.size")
+
+for m in "${METRICS[@]}";
+ do
+   echo ========= removing data "for" metric $m =========
+   tsdb scan ${START} ${END} none "$m" --delete
+   echo ========= removing metric $m =========
+   tsdb uid delete metric $m
+done;
+
+echo ======== try to restart OpenTSDB service =======
+systemctl restart opentsdb || exit 0

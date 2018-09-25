@@ -1,5 +1,8 @@
 import json
 from pytsdb import errors
+import unittest
+
+from pytsdb import tsdb
 
 ADHOC_HOSTS = ['localhost', 'myqeb.com', 'web.kim.com']
 ADHOC_PORTS = ['201', 22222, 693]
@@ -92,3 +95,13 @@ def mock_tsdb_error_get(url, *args, **kwargs):
 
 def mock_unexpected_error_get(url, *args, **kwargs):
     raise Exception("Unexpected error")
+
+
+class GeneralUrlTestCase(object):
+    def test_url(self, endpoint, exec_fn, **kwargs):
+        for a, b, c in zip(ADHOC_HOSTS, ADHOC_PORTS, ADHOC_PROTOCOLS):
+            expected_url = '{}://{}:{}{}'.format(c, a, b, endpoint)
+            c = tsdb.tsdb_connection(a, b, protocol=c)
+            _exec_fn = getattr(c, exec_fn)
+            mock_return_value = _exec_fn(**kwargs)
+            self.assertTrue(mock_return_value[-1] == expected_url)
