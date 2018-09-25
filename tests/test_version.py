@@ -31,6 +31,6 @@ class TsdbVersionTestCase(unittest.TestCase):
         GeneralUrlTestCase.test_url(self, "/api/version/", "version")
 
     @mock.patch('requests.get', side_effect=get_mock_requests_get(__TEST_VERSION__))
-    def test_suggest(self, _):
+    def test_version(self, _):
         return_value = self._c.version()
         self.assertEqual(sorted(return_value), sorted(TsdbVersionTestCase.__TEST_VERSION__))
