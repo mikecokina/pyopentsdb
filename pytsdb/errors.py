@@ -26,3 +26,11 @@ class MissingArgumentError(ArgumentError):
 class UncaughtError(TsdbError):
     """ UncaughError - raise as last possible/unknown error """
     pass
+
+
+class FailedDependency(TsdbError):
+    """
+    FailedDependency - raise when method could not be performed on the resource because the
+    requested action depended on another action and that action failed (e.g. full query)
+    """
+    pass
