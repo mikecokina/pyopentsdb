@@ -2,9 +2,9 @@ import unittest
 from unittest import mock
 import datetime
 
-from pytsdb import tsdb
-from pytsdb import errors
-from pytsdb.query import tsdb_query_metrics_validation
+from pyopentsdb import tsdb
+from pyopentsdb import errors
+from pyopentsdb.query import tsdb_query_metrics_validation
 
 from tests.testutils import get_mock_requests_post, mock_tsdb_connection_error_post, mock_unexpected_error_post
 from tests.testutils import GeneralUrlTestCase

@@ -1,13 +1,14 @@
-from pytsdb import utils
+from pyopentsdb import utils
 
 
-def dropcaches(host, port, protocol, timeout):
+def serializers(host, port, protocol, timeout):
     """
+
     :param host: str
     :param port: str
     :param protocol: str
     :param timeout: int/float/tuple
-    :return: dict
+    :return: json
     """
     url = api_url(host, port, protocol)
     return utils.request_get(url, timeout)
@@ -15,11 +16,11 @@ def dropcaches(host, port, protocol, timeout):
 
 def api_url(host, port, protocol):
     """
-    Make api url for dropcaches
+    Make api url to obtain configuration
 
     :param host: str
     :param port: str
     :param protocol: str
     :return: str
     """
-    return '{}://{}:{}/api/dropcaches/'.format(protocol, host, port)
+    return '{}://{}:{}/api/serializers/'.format(protocol, host, port)

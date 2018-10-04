@@ -2,8 +2,8 @@ from queue import Queue
 from queue import Empty
 from threading import Thread
 
-from pytsdb import errors
-from pytsdb.utils import request_post
+from pyopentsdb import errors
+from pyopentsdb.utils import request_post
 
 
 class IterableQueue(object):

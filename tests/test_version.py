@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from pytsdb import tsdb
+from pyopentsdb import tsdb
 from tests.testutils import GeneralUrlTestCase
 from tests.testutils import get_mock_requests_get
 

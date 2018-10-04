@@ -1,7 +1,7 @@
 import re
 
-from pytsdb import errors
-from pytsdb import utils
+from pyopentsdb import errors
+from pyopentsdb import utils
 
 
 def suggest(host, port, protocol, timeout, **kwargs):

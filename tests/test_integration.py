@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 import time
 
-from pytsdb import tsdb
+from pyopentsdb import tsdb
 
 SLEEP_TIME = 15
 HOST = "localhost"

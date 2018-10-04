@@ -1,5 +1,5 @@
-from pytsdb.utils import request_post
-from pytsdb import errors
+from pyopentsdb.utils import request_post
+from pyopentsdb import errors
 
 
 def validate_put_data(data):

@@ -1,12 +1,12 @@
-from pytsdb import query
-from pytsdb import suggest
-from pytsdb import aggregators
-from pytsdb import dropcaches
-from pytsdb import config
-from pytsdb import stats
-from pytsdb import version
-from pytsdb import serializers
-from pytsdb import put
+from pyopentsdb import query
+from pyopentsdb import suggest
+from pyopentsdb import aggregators
+from pyopentsdb import dropcaches
+from pyopentsdb import config
+from pyopentsdb import stats
+from pyopentsdb import version
+from pyopentsdb import serializers
+from pyopentsdb import put
 
 
 class TsdbConnector(object):

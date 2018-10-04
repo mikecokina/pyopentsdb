@@ -1,4 +1,4 @@
-from pytsdb import utils
+from pyopentsdb import utils
 
 
 def stats(host, port, protocol, timeout):

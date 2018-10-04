@@ -1,6 +1,6 @@
 import unittest
-from pytsdb import tsdb
-from pytsdb import errors
+from pyopentsdb import tsdb
+from pyopentsdb import errors
 from unittest import mock
 from tests.testutils import get_mock_requests_post, mock_tsdb_connection_error_post, mock_unexpected_error_post
 from tests.testutils import GeneralUrlTestCase

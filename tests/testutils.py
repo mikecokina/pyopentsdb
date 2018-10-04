@@ -1,8 +1,7 @@
 import json
-from pytsdb import errors
-import unittest
+from pyopentsdb import errors
 
-from pytsdb import tsdb
+from pyopentsdb import tsdb
 
 ADHOC_HOSTS = ['localhost', 'myqeb.com', 'web.kim.com']
 ADHOC_PORTS = ['201', 22222, 693]

@@ -1,4 +1,4 @@
-from pytsdb import utils
+from pyopentsdb import utils
 
 
 def tsdb_configuration(host, port, protocol, timeout):

@@ -1,6 +1,6 @@
 import time
 import json
-from pytsdb import errors
+from pyopentsdb import errors
 import requests
 
 
