@@ -1,12 +1,12 @@
-Pytsdb
-========
+Pyopentsdb
+==========
 
 Python adapter for OpenTSDB HTTP APIs
 
 Usage:
 ------
 **Python code**::
-
+     >> from pyopentsdb import tsdb
      >> host = "localhost"
      >> port = 4242
      >> protocol = "http"
