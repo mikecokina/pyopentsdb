@@ -1,0 +1,15 @@
+BASIC_TSDB_QUERY = {
+        'start': None,
+        'end': None,
+        'msResolution': False,
+        'showTSUIDs': False,
+        'noAnnotations': False,
+        'globalAnnotations': False,
+        'showSummary': False,
+        'showStats': False,
+        'showQuery': False,
+        'delete': False,
+        'timezone': 'UTC',
+        'useCalendar': False,
+        'queries': list(),
+    }
