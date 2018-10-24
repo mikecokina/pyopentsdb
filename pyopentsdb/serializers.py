@@ -1,17 +1,16 @@
 from pyopentsdb import utils
 
 
-def serializers(host, port, protocol, timeout):
+def serializers(host, port, protocol):
     """
 
     :param host: str
     :param port: str
     :param protocol: str
-    :param timeout: int/float/tuple
     :return: json
     """
     url = api_url(host, port, protocol)
-    return utils.request_get(url, timeout)
+    return utils.request_get(url)
 
 
 def api_url(host, port, protocol):

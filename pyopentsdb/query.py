@@ -3,7 +3,7 @@ from queue import Empty
 from threading import Thread
 
 from pyopentsdb import errors
-from pyopentsdb.utils import request_post
+from pyopentsdb.utils import request_post, get_basic_url
 
 
 class IterableQueue(object):
@@ -52,12 +52,11 @@ def tsdb_query_metrics_validation(**kwargs):
                         "Missing argument 'type', 'tagk' or 'filter' in filters object")
 
 
-def query(host, port, protocol, timeout, **kwargs):
+def query(host, port, protocol, **kwargs):
     """
     :param host: str
     :param port: str
     :param protocol: str
-    :param timeout: int/float/tuple; requests.request timeout
     :param kwargs: dict
     :return: dict
     """
@@ -107,17 +106,16 @@ def query(host, port, protocol, timeout, **kwargs):
     params.update({'queries': queries})
 
     url = api_url(host, port, protocol, pointer='QUERY')
-    return request_post(url, params, timeout)
+    return request_post(url, params)
 
 
-def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency=40):
+def multiquery(host, port, protocol, query_chunks, max_tsdb_concurrency=40):
     """
     OpenTSDB /api/query/ concurrency wrapper
 
     :param protocol: str (mandatory); protocol (http/https)
     :param port: int (mandatory); OpenTSDB instance port
     :param host: str (mandatory); OpenTSDB host
-    :param timeout: int/float/tuple; requests.request timeout
     :param query_chunks: list (mandatory); list of json serializable dicts representing OpenTSDB query
     :param max_tsdb_concurrency: int (optional), default=40; maximum number of concurrency
                                                             threads hitting OpenTSDB api
@@ -140,7 +138,7 @@ def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency
                 break
 
             try:
-                result = query(host, port, protocol, timeout, **query_kwargs)
+                result = query(host, port, protocol, **query_kwargs)
                 result_queue.put(result)
             except Exception as we:
                 error_queue.put(we)
@@ -191,4 +189,4 @@ def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency
 
 def api_url(host, port, protocol, pointer):
     if pointer == 'QUERY':
-        return '{}://{}:{}/api/query/'.format(protocol, host, port)
+        return '{}/api/query/'.format(get_basic_url(host=host, port=port, protocol=protocol))

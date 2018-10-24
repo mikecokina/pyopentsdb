@@ -4,7 +4,7 @@ from pyopentsdb import errors
 from pyopentsdb import utils
 
 
-def suggest(host, port, protocol, timeout, **kwargs):
+def suggest(host, port, protocol, **kwargs):
     url = api_url(host, port, protocol)
     try:
         t = kwargs['type']
@@ -20,7 +20,7 @@ def suggest(host, port, protocol, timeout, **kwargs):
         }
     )
 
-    return utils.request_post(url, params, timeout)
+    return utils.request_post(url, params)
 
 
 def metrics(host, port, protocol, timeout, **kwargs):
@@ -30,7 +30,7 @@ def metrics(host, port, protocol, timeout, **kwargs):
         'max': kwargs.get('max', 10000),
     })
 
-    metric_list = suggest(host, port, protocol, timeout, **kwargs)
+    metric_list = suggest(host, port, protocol, **kwargs)
     regexp = kwargs.get('regexp')
     if regexp:
         metric_list = [metric for metric in metric_list if re.search(re.compile(regexp), str(metric), flags=0)]

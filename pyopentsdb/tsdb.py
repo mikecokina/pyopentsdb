@@ -1,3 +1,5 @@
+import requests
+
 from pyopentsdb import query
 from pyopentsdb import suggest
 from pyopentsdb import aggregators
@@ -10,27 +12,29 @@ from pyopentsdb import put
 
 
 class TsdbConnector(object):
-    def __init__(self, host, port, **kwargs):
+    def __init__(self, host, **kwargs):
         """
         :param port: int (mandatory); OpenTSDB instance port
         :param host: str (mandatory); OpenTSDB host
         :param kwargs: see bellow
         :**kwargs options**:
+            * **port** * -- int (optional), default=None; OpenTSDB port,
+            (in case it is configured like e.g. https://server/opentsdb/api/<whatever>, port is not used)
             * **timeout** * -- str (optional), default=None; requests.request timeout
             * **protocol** * -- str (optional), default=http; protocol (http/https)
         """
         self._host = host
-        self._port = port
+        self._port = kwargs.get('port', None)
         self._protocol = kwargs.get('protocol', 'http')
-        self._timeout = kwargs.get('timeout', None)
         self._config = self._parameters_serializer()
+        self._session = requests.Session()
 
     def _parameters_serializer(self):
         return {
             'host': self._host,
             'port': self._port,
             'protocol': self._protocol,
-            'timeout': self._timeout
+            'session': self._session
         }
 
     def suggest(self, **kwargs):
@@ -52,7 +56,7 @@ class TsdbConnector(object):
                     The maximum number of suggested results to return. Must be greater than 0
         :return: dict
         """
-        return suggest.suggest(self._host, self._port, self._protocol, self._timeout, **kwargs)
+        return suggest.suggest(self._host, self._port, self._protocol, **kwargs)
 
     def metrics(self, **kwargs):
         """
@@ -67,7 +71,7 @@ class TsdbConnector(object):
                     A metric to match on
         :return: dict
         """
-        return suggest.metrics(self._host, self._port, self._protocol, self._timeout,  **kwargs)
+        return suggest.metrics(self._host, self._port, self._protocol,  **kwargs)
 
     def query(self, **kwargs):
         """
@@ -179,7 +183,7 @@ class TsdbConnector(object):
         :return: dict
         """
 
-        return query.query(self._host, self._port, self._protocol, self._timeout,  **kwargs)
+        return query.query(self._host, self._port, self._protocol,  **kwargs)
 
     def multiquery(self, query_chunks, **kwargs):
         """
@@ -193,14 +197,14 @@ class TsdbConnector(object):
         :return: dict
         """
 
-        return query.multiquery(self._host, self._port, self._protocol, self._timeout,  query_chunks, **kwargs)
+        return query.multiquery(self._host, self._port, self._protocol,  query_chunks, **kwargs)
 
     def aggregators(self):
         """
         This endpoint simply lists the names of implemented aggregation functions used in timeseries queries.
         :return:  dict
         """
-        return aggregators.aggregators(self._host, self._port, self._protocol, self._timeout)
+        return aggregators.aggregators(self._host, self._port, self._protocol)
 
     def dropcaches(self):
         """
@@ -318,7 +322,7 @@ class TsdbConnector(object):
         Standard status code with details is 200 (request._content example: b'{"success":2,"failed":0,"errors":[]}')
         :return: dict
         """
-        return put.put(self._host, self._port, self._protocol, self._timeout, data, **kwargs)
+        return put.put(self._host, self._port, self._protocol, data, **kwargs)
 
 
 def tsdb_connection(host, port, protocol='http', timeout=None):

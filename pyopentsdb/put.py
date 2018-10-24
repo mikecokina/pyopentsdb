@@ -41,7 +41,7 @@ def put(host, port, protocol, timeout, data, **kwargs):
     sync_timeout = kwargs.get('sync_timeout', 0) if sync else False
     url = api_url(host, port, protocol, summary, details, sync, sync_timeout)
 
-    return request_post(url, data, timeout)
+    return request_post(url, data)
 
 
 def api_url(host, port, protocol, summary, details, sync, sync_timeout):

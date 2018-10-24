@@ -1,7 +1,7 @@
 from pyopentsdb import utils
 
 
-def aggregators(host, port, protocol, timeout):
+def aggregators(host, port, protocol):
     """
     Return all available tsdb aggregators
     :param host: str
@@ -11,7 +11,7 @@ def aggregators(host, port, protocol, timeout):
     :return: list
     """
     url = api_url(host, port, protocol)
-    return utils.request_get(url, timeout)
+    return utils.request_get(url)
 
 
 def api_url(host, port, protocol):
@@ -22,4 +22,4 @@ def api_url(host, port, protocol):
     :param protocol: str
     :return: str
     """
-    return '{}://{}:{}/api/aggregators/'.format(protocol, host, port)
+    return '{}/api/aggregators/'.format(utils.get_basic_url(host=host, port=port, protocol=protocol))

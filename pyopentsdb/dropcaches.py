@@ -1,16 +1,15 @@
 from pyopentsdb import utils
 
 
-def dropcaches(host, port, protocol, timeout):
+def dropcaches(host, port, protocol):
     """
     :param host: str
     :param port: str
     :param protocol: str
-    :param timeout: int/float/tuple
     :return: dict
     """
     url = api_url(host, port, protocol)
-    return utils.request_get(url, timeout)
+    return utils.request_get(url)
 
 
 def api_url(host, port, protocol):

@@ -1,21 +1,20 @@
 from pyopentsdb import utils
 
 
-def tsdb_configuration(host, port, protocol, timeout):
+def tsdb_configuration(host, port, protocol):
     url = api_url(host, port, protocol, pointer='CONFIG')
-    return utils.request_get(url, timeout)
+    return utils.request_get(url)
 
 
-def filters(host, port, protocol, timeout):
+def filters(host, port, protocol):
     """
     :param host: str
     :param port: str
     :param protocol: str
-    :param timeout: int/float/tuple
     :return: dict
     """
     url = api_url(host, port, protocol, pointer='FILTERS')
-    return utils.request_get(url, timeout)
+    return utils.request_get(url)
 
 
 def api_url(host, port, protocol, pointer):

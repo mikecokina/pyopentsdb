@@ -56,9 +56,13 @@ def request(requests_fn):
         raise errors.UncaughtError(str(e))
 
 
-def request_post(url, params, timeout):
-    return request(lambda: requests.post(url, json.dumps(params), timeout=timeout))
+def request_post(url, params):
+    return request(lambda: requests.post(url, json.dumps(params)))
 
 
-def request_get(url, timeout):
-    return request(lambda: requests.get(url, timeout=timeout))
+def request_get(url):
+    return request(lambda: requests.get(url))
+
+
+def get_basic_url(host, protocol, port):
+    return "{}://{}:{}".format(protocol, host, port) if port is not None else "{}://{}".format(protocol, host)
