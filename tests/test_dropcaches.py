@@ -13,17 +13,15 @@ class TsdbDopcachesTestCase(unittest.TestCase):
     }
 
     def setUp(self):
-        self._host = 'localhost'
-        self._port = 5896
-        self._protocol = 'mockhttp'
+        self._host = 'mockhttp://localhost:5896/'
 
-        self._c = tsdb.tsdb_connection(self._host, self._port, protocol=self._protocol)
+        self._c = tsdb.tsdb_connection(self._host)
 
-    @mock.patch('requests.get', side_effect=get_mock_requests_get(None))
+    @mock.patch('requests.Session.get', side_effect=get_mock_requests_get(None))
     def test_url(self, _):
         GeneralUrlTestCase.test_url(self, "/api/dropcaches/", "dropcaches")
 
-    @mock.patch('requests.get', side_effect=get_mock_requests_get(__TETS_DROPCACHES__))
+    @mock.patch('requests.Session.get', side_effect=get_mock_requests_get(__TETS_DROPCACHES__))
     def test_config(self, _):
         response = self._c.dropcaches()
         self.assertEqual(sorted(response), sorted(TsdbDopcachesTestCase.__TETS_DROPCACHES__))

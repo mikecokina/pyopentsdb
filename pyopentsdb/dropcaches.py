@@ -1,24 +1,20 @@
 from pyopentsdb import utils
 
 
-def dropcaches(host, port, protocol):
+def dropcaches(host, r_session, **kwargs):
     """
     :param host: str
-    :param port: str
-    :param protocol: str
+    :param r_session: requests.Session
     :return: dict
     """
-    url = api_url(host, port, protocol)
-    return utils.request_get(url)
+    return utils.request_get(api_url(host), r_session, **kwargs)
 
 
-def api_url(host, port, protocol):
+def api_url(host):
     """
     Make api url for dropcaches
 
     :param host: str
-    :param port: str
-    :param protocol: str
     :return: str
     """
-    return '{}://{}:{}/api/dropcaches/'.format(protocol, host, port)
+    return '{}/api/dropcaches/'.format(host)
