@@ -34,26 +34,24 @@ class TsdbConfigTestCase(unittest.TestCase):
     }
 
     def setUp(self):
-        self._host = 'localhost'
-        self._port = 5896
-        self._protocol = 'mockhttp'
+        self._host = 'mockhttp://localhost:5896/'
 
-        self._c = tsdb.tsdb_connection(self._host, self._port, protocol=self._protocol)
+        self._c = tsdb.tsdb_connection(self._host)
 
-    @mock.patch('requests.get', side_effect=get_mock_requests_get(None))
+    @mock.patch('requests.Session.get', side_effect=get_mock_requests_get(None))
     def test_url_config(self, _):
         GeneralUrlTestCase.test_url(self, "/api/config/", "config")
 
-    @mock.patch('requests.get', side_effect=get_mock_requests_get(None))
+    @mock.patch('requests.Session.get', side_effect=get_mock_requests_get(None))
     def test_url_filters(self, _):
         GeneralUrlTestCase.test_url(self, "/api/config/filters/", "filters")
 
-    @mock.patch('requests.get', side_effect=get_mock_requests_get(__TEST_CONFIG__))
+    @mock.patch('requests.Session.get', side_effect=get_mock_requests_get(__TEST_CONFIG__))
     def test_config(self, _):
         response = self._c.config()
         self.assertEqual(sorted(response), sorted(TsdbConfigTestCase.__TEST_CONFIG__))
 
-    @mock.patch('requests.get', side_effect=get_mock_requests_get(__TEST_FILTERS__))
+    @mock.patch('requests.Session.get', side_effect=get_mock_requests_get(__TEST_FILTERS__))
     def test_filters(self, _):
         response = self._c.filters()
         self.assertEqual(sorted(response), sorted(TsdbConfigTestCase.__TEST_FILTERS__))

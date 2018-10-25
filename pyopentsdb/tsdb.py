@@ -45,6 +45,7 @@ class TsdbConnector(object):
                     A string to match on for the given type
                * **max** * -- int;
                     The maximum number of suggested results to return. Must be greater than 0
+               * **<requests.request wkargs>** *
         :return: dict
         """
         return suggest.suggest(self._host, self._session, **kwargs)
@@ -58,11 +59,31 @@ class TsdbConnector(object):
                     The maximum number of suggested results to return. Must be greater than 0
                * **regxp** * -- str;
                     Regex pattern to matrics have to satisfied
-                * **q** * -- str;
+               * **q** * -- str;
                     A metric to match on
+               * **<requests.request wkargs>** *
         :return: dict
         """
         return suggest.metrics(self._host, self._session, **kwargs)
+
+    def config(self, **kwargs):
+        """
+        This endpoint returns information about the running configuration of the TSD.
+        It is read only and cannot be used to set configuration options.
+        :**kwargs options**:
+            * **<requests.request wkargs>** *
+        :return: dict
+        """
+        return config.tsdb_configuration(self._host, self._session, **kwargs)
+
+    def filters(self, **kwargs):
+        """
+        This endpoint lists the various filters loaded by the TSD and some information about how to use them.
+        :**kwargs options**:
+            * **<requests.request wkargs>** *
+        :return: dict
+        """
+        return config.filters(self._host, self._session, **kwargs)
 
     # def query(self, **kwargs):
     #     """
