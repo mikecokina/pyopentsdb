@@ -6,8 +6,6 @@ Python adapter for OpenTSDB HTTP APIs
 Usage:
 ------
 **Python code**::
-from pyopentsdb import tsdb
-
 
      >> from pyopentsdb import tsdb
      >> host = "https://server.domain/opentsdb/"
