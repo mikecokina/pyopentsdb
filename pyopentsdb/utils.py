@@ -25,7 +25,10 @@ def try_contact_tsdb(exec_fn, max_attempts=3, timeout=2):
             elif result.status_code in [424]:
                 raise errors.FailedDependency
             return result
-        except (requests.exceptions.ConnectionError, errors.FailedDependency):
+        except (requests.exceptions.ConnectionError, errors.FailedDependency) as e:
+            if 'SSLError' in str(e):
+                raise errors.SSLError(str(e))
+
             time.sleep(__TIMEOUT__)
             continue
         finally:
@@ -45,6 +48,8 @@ def request(requests_fn):
             return None
         elif response.status_code in [400]:
             raise errors.ArgumentError(json.loads(response.content.decode())["error"]["message"])
+        elif response.status_code in [403]:
+            raise errors.ForbiddenError(response.content.decode())
         elif response.status_code in [424]:
             raise errors.FailedDependency(json.loads(response.content.decode())["error"]["message"])
         raise errors.UncaughtError(json.loads(response.content.decode()) if response.content else 'Unknown error')
@@ -52,17 +57,16 @@ def request(requests_fn):
         raise
     except errors.TsdbConnectionError:
         raise
+    except errors.ForbiddenError:
+        raise
     except Exception as e:
         raise errors.UncaughtError(str(e))
 
 
-def request_post(url, params):
-    return request(lambda: requests.post(url, json.dumps(params)))
+def request_post(url, r_session, **kwargs):
+    data = json.dumps(kwargs.pop('data', dict()))
+    return request(lambda: r_session.post(url, data=data, **kwargs))
 
 
-def request_get(url):
-    return request(lambda: requests.get(url))
-
-
-def get_basic_url(host, protocol, port):
-    return "{}://{}:{}".format(protocol, host, port) if port is not None else "{}://{}".format(protocol, host)
+def request_get(url, r_session, **kwargs):
+    return request(lambda: r_session.get(url, **kwargs))

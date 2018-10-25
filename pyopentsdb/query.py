@@ -3,7 +3,7 @@ from queue import Empty
 from threading import Thread
 
 from pyopentsdb import errors
-from pyopentsdb.utils import request_post, get_basic_url
+from pyopentsdb.utils import request_post
 
 
 class IterableQueue(object):
@@ -187,6 +187,6 @@ def multiquery(host, port, protocol, query_chunks, max_tsdb_concurrency=40):
     return sum([val for val in IterableQueue(result_queue)], list())
 
 
-def api_url(host, port, protocol, pointer):
+def api_url(host, pointer):
     if pointer == 'QUERY':
-        return '{}/api/query/'.format(get_basic_url(host=host, port=port, protocol=protocol))
+        return '{}/api/query/'.format(host)

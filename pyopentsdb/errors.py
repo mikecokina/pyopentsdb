@@ -34,3 +34,17 @@ class FailedDependency(TsdbError):
     requested action depended on another action and that action failed (e.g. full query)
     """
     pass
+
+
+class SSLError(TsdbError):
+    """
+    SSLError - raise when problem with SSL
+    """
+    pass
+
+
+class ForbiddenError(TsdbError):
+    """
+    ForbiddenError - raise when server return 403
+    """
+    pass

@@ -6,6 +6,7 @@ from pyopentsdb import tsdb
 ADHOC_HOSTS = ['localhost', 'myqeb.com', 'web.kim.com']
 ADHOC_PORTS = ['201', 22222, 693]
 ADHOC_PROTOCOLS = ['http', 'https', 'ftp']
+ADHOC_HOSTS = ["{}://{}:{}/".format(a, b, c) for a, b, c in zip(ADHOC_PROTOCOLS, ADHOC_HOSTS, ADHOC_PORTS)]
 
 
 class MockRequests(object):
@@ -98,9 +99,9 @@ def mock_unexpected_error_get(url, *args, **kwargs):
 
 class GeneralUrlTestCase(object):
     def test_url(self, endpoint, exec_fn, **kwargs):
-        for a, b, c in zip(ADHOC_HOSTS, ADHOC_PORTS, ADHOC_PROTOCOLS):
-            expected_url = '{}://{}:{}{}'.format(c, a, b, endpoint)
-            c = tsdb.tsdb_connection(a, b, protocol=c)
+        for host in ADHOC_HOSTS:
+            expected_url = '{}{}'.format(host[:-1], endpoint)
+            c = tsdb.tsdb_connection(host)
             _exec_fn = getattr(c, exec_fn)
             mock_return_value = _exec_fn(**kwargs)
             self.assertTrue(mock_return_value[-1] == expected_url)
