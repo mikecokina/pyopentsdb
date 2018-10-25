@@ -16,6 +16,6 @@ class TsdbSerializersTestCase(unittest.TestCase):
         }
     }
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(None))
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(None))
     def test_url(self, _):
         GeneralUrlTestCase.test_url(self, "/api/put/", "put", data=TsdbSerializersTestCase.__TEST_PUT_SINGLE__)

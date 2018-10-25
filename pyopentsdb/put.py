@@ -11,12 +11,10 @@ def validate_put_data(data):
             raise errors.MissingArgumentError("Missing argument/s in put data")
 
 
-def put(host, port, protocol, timeout, data, **kwargs):
+def put(host, r_session, data, **kwargs):
     """
     :param host: str
-    :param port: str
-    :param protocol: str
-    :param timeout: int/float/tuple; requests.request timeout
+    :param r_session: requests.Session
     :param data: list of dicts or dict
     :param kwargs: see bellow
         :**kwargs options**:
@@ -39,13 +37,13 @@ def put(host, port, protocol, timeout, data, **kwargs):
     details = kwargs.get('details', False)
     sync = kwargs.get('sync', False)
     sync_timeout = kwargs.get('sync_timeout', 0) if sync else False
-    url = api_url(host, port, protocol, summary, details, sync, sync_timeout)
+    url = api_url(host, summary, details, sync, sync_timeout)
+    kwargs.update(dict(data=data))
+    return request_post(url, r_session, **kwargs)
 
-    return request_post(url, data)
 
-
-def api_url(host, port, protocol, summary, details, sync, sync_timeout):
-    url = '{}://{}:{}/api/put/'.format(protocol, host, port)
+def api_url(host, summary, details, sync, sync_timeout):
+    url = '{}/api/put/'.format(host)
     url, previous = (''.join([url, '?summary']), True) if summary else (url, False)
 
     if details:

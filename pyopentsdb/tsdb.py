@@ -303,6 +303,30 @@ class TsdbConnector(object):
         """
         return version.version(self._host, self._session, **kwargs)
 
+    def put(self, data, **kwargs):
+        """
+        Metric has to be created or enable tsd.core.auto_create_metrics
+        :param data: list of dicts or dict
+        :param kwargs: see bellow
+        :**kwargs options**:
+               * **summary** * --  bool;
+                    Whether or not to return summary information
+               * **details** * --  bool;
+                    Whether or not to return detailed information
+               * **sync** * --  bool;
+                    Whether or not to wait for the data to be flushed to storage before returning the results.
+               * **sync_timeout** * --  int;
+                    A timeout, in milliseconds, to wait for the data to be flushed to storage before
+                    returning with an error. When a timeout occurs, using the details flag will tell
+                    how many data points failed and how many succeeded. sync must also be given for this
+                    to take effect. A value of 0 means the write will not timeout.
+        If both detailed and summary are present in a query string, the API will respond with detailed information.
+        Standard status code is 204
+        Standard status code with details is 200 (request._content example: b'{"success":2,"failed":0,"errors":[]}')
+        :return: dict
+        """
+        return put.put(self._host, self._session, data, **kwargs)
+
 
 def tsdb_connection(host):
     __TSDB_CONNECTION__ = TsdbConnector(
