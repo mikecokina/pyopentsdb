@@ -5,10 +5,8 @@ import time
 from pyopentsdb import tsdb
 
 SLEEP_TIME = 15
-HOST = "localhost"
-PORT = 4242
-PROTOCOL = "http"
-TSDB_CONNECTION = tsdb.tsdb_connection(HOST, PORT, protocol=PROTOCOL, timeout=10)
+HOST = "http://localhost:4242/"
+TSDB_CONNECTION = tsdb.tsdb_connection(HOST)
 
 
 def ping():
@@ -48,9 +46,11 @@ class TsdbIntegrationTestCase(unittest.TestCase):
     ]
 
     def setUp(self):
+        TSDB_CONNECTION.dropcaches()
         TSDB_CONNECTION.put(data=TsdbIntegrationTestCase.__TEST_PUT_SINGLE__)
         TSDB_CONNECTION.put(data=TsdbIntegrationTestCase.__TEST_PUT_MULTIPLE__)
         TSDB_CONNECTION.put(data=TsdbIntegrationTestCase.__TEST_DELETE__)
+        TSDB_CONNECTION.dropcaches()
 
     def test_query_single(self):
         query_kwargs = {
@@ -67,8 +67,8 @@ class TsdbIntegrationTestCase(unittest.TestCase):
             time.sleep(SLEEP_TIME)
             data = TSDB_CONNECTION.query(**query_kwargs)
             attempt += 1
-
         self.assertEqual({'1514764800': 18}, data[0]["dps"])
+        TSDB_CONNECTION.dropcaches()
 
     def test_query_multiple(self):
         query_kwargs = {
@@ -91,6 +91,7 @@ class TsdbIntegrationTestCase(unittest.TestCase):
 
         for ts, val in data[0]["dps"].items():
             self.assertTrue(ts in tss and val in vals)
+        TSDB_CONNECTION.dropcaches()
 
     def test_delete_query(self):
         query_kwargs = {
@@ -103,14 +104,15 @@ class TsdbIntegrationTestCase(unittest.TestCase):
                 "aggregator": "none",
             }]
         }
-
         TSDB_CONNECTION.query(**query_kwargs)
-        time.sleep(SLEEP_TIME)
-        query_kwargs.pop("delete")
+        TSDB_CONNECTION.dropcaches()
+
+        query_kwargs.update({"delete": False})
 
         data, attempt = True, 0
         while data and attempt < 2:
-            time.sleep(SLEEP_TIME)
             data = TSDB_CONNECTION.query(**query_kwargs)
+            if not data:
+                break
             attempt += 1
         self.assertTrue(len(data) == 1)
