@@ -13,7 +13,7 @@ version_re = re.compile('^Version: (.+)$', re.M)
 
 
 def get_version():
-    return 0.1
+    return 0.2
     # Return the version if it has been injected into the file by git-archive
     version = tag_re.search('$Format:%D$')
     if version:
