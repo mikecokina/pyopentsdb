@@ -85,131 +85,132 @@ class TsdbConnector(object):
         """
         return config.filters(self._host, self._session, **kwargs)
 
-    # def query(self, **kwargs):
-    #     """
-    #     Enables extracting data from the storage system in various formats determined by
-    #     the serializer selected. Queries can be submitted via the 1.0 query string format
-    #     or body content.
-    #
-    #     :param kwargs: see bellow
-    #     :**kwargs options**:
-    #            * **start** * -- datetime;
-    #                     The start time for the query. This can be a relative or absolute timestamp.
-    #                     See Querying or Reading Data for details.
-    #            * **end** * -- datetime;
-    #                     An end time for the query. If not supplied, the TSD will assume the local system time on the server.
-    #                     This may be a relative or absolute timestamp. See Querying or Reading Data for details.
-    #            * **metrics** * -- dict;
-    #                     The full name of a metric is supplied along with an optional list of tags.
-    #                     This is optimized for aggregating multiple time series into one result.
-    #                     aggregator: str
-    #                             The name of an aggregation function to use. See /api/aggregators
-    #                     metric: str
-    #                             The name of a metric stored in the system
-    #                     rate: bool
-    #                             Whether or not the data should be converted into deltas before returning.
-    #                             This is useful if the metric is a continuously incrementing counter and you
-    #                             want to view the rate of change between data points.
-    #                    rateOptions: dict
-    #                             counter: bool
-    #                                     Whether or not the underlying data is a monotonically increasing
-    #                                     counter that may roll over
-    #                             counterMax: int
-    #                                     A positive integer representing the maximum value for the counter.
-    #                             resetValue: int
-    #                                     An optional value that, when exceeded, will cause the aggregator
-    #                                     to return a 0 instead of the calculated rate. Useful when data sources
-    #                                     are frequently reset to avoid spurious spikes.
-    #                             dropResets: bool
-    #                                     Whether or not to simply drop rolled-over or reset data points.
-    #                    downsample: str
-    #                             An optional downsampling function to reduce the amount of data returned.
-    #                             examples:
-    #                                 1h-sum
-    #                                 30m-avg-nan
-    #                                 24h-max-zero
-    #                                 1dc-sum
-    #                                 0all-sum
-    #                             pattern:
-    #                                 <Size><Units>-<Aggregator>-<Fill Policy>
-    #                    tags: dict
-    #                             To drill down to specific timeseries or group results by tag, supply one or more map values
-    #                             in the same format as the query string. Tags are converted to filters in 2.2.
-    #                             See the notes below about conversions. Note that if no tags are specified, all metrics
-    #                             in the system will be aggregated into the results. Deprecated in 2.2
-    #                             example:
-    #                                 {tagk: tagv}
-    #                    filters: dict
-    #                             type: str
-    #                                 The name of the filter to invoke. See /api/config/filters
-    #                             tagk: str
-    #                                 The tag key to invoke the filter on
-    #                             filter:
-    #                                 The filter expression to evaluate and depends on the filter being used
-    #                             groupBy: bool
-    #                                 Whether or not to group the results by each value matched by the filter.
-    #                                 By default all values matching the filter will be aggregated into a single series.
-    #                             example:
-    #                                 filters = [
-    #                                 {
-    #                                     "type": "wildcard",
-    #                                     "tagk": "host",
-    #                                     "filter": "web01*",
-    #                                     "groupBy": False
-    #                                 }]
-    #                    explicitTags: bool
-    #                             Returns the series that include only the tag keys provided in the filters.
-    #            * **ms** * -- bool;
-    #                     Whether or not to output data point timestamps in milliseconds or seconds.
-    #                     The msResolution flag is recommended. If this flag is not provided and there
-    #                     are multiple data points within a second, those data points will be down sampled
-    #                     using the query's aggregation function.
-    #            * **show_tsuids** * -- bool;
-    #                     Whether or not to output the TSUIDs associated with timeseries in the results.
-    #                     If multiple time series were aggregated into one set, multiple TSUIDs will be
-    #                     returned in a sorted manner
-    #            * **no_annotations** * -- bool;
-    #                     Whether or not to return annotations with a query. The default is to return annotations
-    #                     for the requested timespan but this flag can disable the return. This affects both local
-    #                     and global notes and overrides globalAnnotations
-    #            * **global_annotations** * -- bool;
-    #                     Whether or not the query should retrieve global annotations for the requested timespan
-    #            * **show_summary** * -- bool;
-    #                     Whether or not to show a summary of timings surrounding the query in the results. This creates
-    #                     another object in the map that is unlike the data point objects. See Query Details and Stats
-    #            * **show_stats** * -- bool;
-    #                     Whether or not to show detailed timings surrounding the query in the results. This creates
-    #                     another object in the map that is unlike the data point objects. See Query Details and Stats
-    #            * **show_query** * -- bool;
-    #                     Whether or not to return the original sub query with the query results. If the request
-    #                     contains many sub queries then this is a good way to determine which results belong to which
-    #                     sub query. Note that in the case of a * or wildcard query, this can produce
-    #                     a lot of duplicate output.
-    #            * **delete** * -- bool;
-    #                     Can be passed to the JSON with a POST to delete any data points that match the given query.
-    #            * **timezone** * -- str;
-    #                     An optional timezone for calendar-based downsampling. Must be a valid timezone database name
-    #                     supported by the JRE installed on the TSD server.
-    #            * **use_calendar** * -- bool;
-    #                     Whether or not use the calendar based on the given timezone for downsampling intervals
-    #     :return: dict
-    #     """
-    #
-    #     return query.query(self._host, self._port, self._protocol,  **kwargs)
-    #
-    # def multiquery(self, query_chunks, **kwargs):
-    #     """
-    #     Enables issuing multiple queries in parallel
-    #
-    #     :param query_chunks: list; list of json serializable dicts representing OpenTSDB query
-    #     :param kwargs: see bellow
-    #     :**kwargs options**:
-    #         * **max_tsdb_concurrency** -- int (optional), default=40;
-    #                     Maximum number of concurrency threads hitting OpenTSDB api
-    #     :return: dict
-    #     """
-    #
-    #     return query.multiquery(self._host, self._port, self._protocol,  query_chunks, **kwargs)
+    def query(self, **kwargs):
+        """
+        Enables extracting data from the storage system in various formats determined by
+        the serializer selected. Queries can be submitted via the 1.0 query string format
+        or body content.
+
+        :param kwargs: see bellow
+        :**kwargs options**:
+               * **start** * -- datetime;
+                        The start time for the query. This can be a relative or absolute timestamp.
+                        See Querying or Reading Data for details.
+               * **end** * -- datetime;
+                        An end time for the query. If not supplied, the TSD will assume the local system time on the server.
+                        This may be a relative or absolute timestamp. See Querying or Reading Data for details.
+               * **metrics** * -- dict;
+                        The full name of a metric is supplied along with an optional list of tags.
+                        This is optimized for aggregating multiple time series into one result.
+                        aggregator: str
+                                The name of an aggregation function to use. See /api/aggregators
+                        metric: str
+                                The name of a metric stored in the system
+                        rate: bool
+                                Whether or not the data should be converted into deltas before returning.
+                                This is useful if the metric is a continuously incrementing counter and you
+                                want to view the rate of change between data points.
+                       rateOptions: dict
+                                counter: bool
+                                        Whether or not the underlying data is a monotonically increasing
+                                        counter that may roll over
+                                counterMax: int
+                                        A positive integer representing the maximum value for the counter.
+                                resetValue: int
+                                        An optional value that, when exceeded, will cause the aggregator
+                                        to return a 0 instead of the calculated rate. Useful when data sources
+                                        are frequently reset to avoid spurious spikes.
+                                dropResets: bool
+                                        Whether or not to simply drop rolled-over or reset data points.
+                       downsample: str
+                                An optional downsampling function to reduce the amount of data returned.
+                                examples:
+                                    1h-sum
+                                    30m-avg-nan
+                                    24h-max-zero
+                                    1dc-sum
+                                    0all-sum
+                                pattern:
+                                    <Size><Units>-<Aggregator>-<Fill Policy>
+                       tags: dict
+                                To drill down to specific timeseries or group results by tag, supply one or more map values
+                                in the same format as the query string. Tags are converted to filters in 2.2.
+                                See the notes below about conversions. Note that if no tags are specified, all metrics
+                                in the system will be aggregated into the results. Deprecated in 2.2
+                                example:
+                                    {tagk: tagv}
+                       filters: dict
+                                type: str
+                                    The name of the filter to invoke. See /api/config/filters
+                                tagk: str
+                                    The tag key to invoke the filter on
+                                filter:
+                                    The filter expression to evaluate and depends on the filter being used
+                                groupBy: bool
+                                    Whether or not to group the results by each value matched by the filter.
+                                    By default all values matching the filter will be aggregated into a single series.
+                                example:
+                                    filters = [
+                                    {
+                                        "type": "wildcard",
+                                        "tagk": "host",
+                                        "filter": "web01*",
+                                        "groupBy": False
+                                    }]
+                       explicitTags: bool
+                                Returns the series that include only the tag keys provided in the filters.
+               * **ms** * -- bool;
+                        Whether or not to output data point timestamps in milliseconds or seconds.
+                        The msResolution flag is recommended. If this flag is not provided and there
+                        are multiple data points within a second, those data points will be down sampled
+                        using the query's aggregation function.
+               * **show_tsuids** * -- bool;
+                        Whether or not to output the TSUIDs associated with timeseries in the results.
+                        If multiple time series were aggregated into one set, multiple TSUIDs will be
+                        returned in a sorted manner
+               * **no_annotations** * -- bool;
+                        Whether or not to return annotations with a query. The default is to return annotations
+                        for the requested timespan but this flag can disable the return. This affects both local
+                        and global notes and overrides globalAnnotations
+               * **global_annotations** * -- bool;
+                        Whether or not the query should retrieve global annotations for the requested timespan
+               * **show_summary** * -- bool;
+                        Whether or not to show a summary of timings surrounding the query in the results. This creates
+                        another object in the map that is unlike the data point objects. See Query Details and Stats
+               * **show_stats** * -- bool;
+                        Whether or not to show detailed timings surrounding the query in the results. This creates
+                        another object in the map that is unlike the data point objects. See Query Details and Stats
+               * **show_query** * -- bool;
+                        Whether or not to return the original sub query with the query results. If the request
+                        contains many sub queries then this is a good way to determine which results belong to which
+                        sub query. Note that in the case of a * or wildcard query, this can produce
+                        a lot of duplicate output.
+               * **delete** * -- bool;
+                        Can be passed to the JSON with a POST to delete any data points that match the given query.
+               * **timezone** * -- str;
+                        An optional timezone for calendar-based downsampling. Must be a valid timezone database name
+                        supported by the JRE installed on the TSD server.
+               * **use_calendar** * -- bool;
+                        Whether or not use the calendar based on the given timezone for downsampling intervals
+               * **<requests.request kwargs>** *
+        :return: dict
+        """
+
+        return query.query(self._host, self._session, **kwargs)
+
+    def multiquery(self, query_chunks, **kwargs):
+        """
+        Enables issuing multiple queries in parallel
+
+        :param query_chunks: list; list of json serializable dicts representing OpenTSDB query
+        :param kwargs: see bellow
+        :**kwargs options**:
+            * **max_tsdb_concurrency** -- int (optional), default=40;
+                        Maximum number of concurrency threads hitting OpenTSDB api
+            * **<requests.request kwargs>** *
+        :return: dict
+        """
+        return query.multiquery(self._host, self._session,  query_chunks, **kwargs)
 
     def aggregators(self, **kwargs):
         """
@@ -320,6 +321,7 @@ class TsdbConnector(object):
                     returning with an error. When a timeout occurs, using the details flag will tell
                     how many data points failed and how many succeeded. sync must also be given for this
                     to take effect. A value of 0 means the write will not timeout.
+               * **<requests.request kwargs>** *
         If both detailed and summary are present in a query string, the API will respond with detailed information.
         Standard status code is 204
         Standard status code with details is 200 (request._content example: b'{"success":2,"failed":0,"errors":[]}')

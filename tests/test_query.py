@@ -47,22 +47,20 @@ class QueryTestCase(unittest.TestCase):
     }
 
     def setUp(self):
-        self._host = 'localhost'
-        self._port = 5896
-        self._protocol = 'mockhttp'
+        self._host = 'mockhttp://localhost:5896/'
 
-        self._c = tsdb.tsdb_connection(self._host, self._port, protocol=self._protocol)
+        self._c = tsdb.tsdb_connection(self._host)
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(None))
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(None))
     def test_url(self, _):
         GeneralUrlTestCase.test_url(self, "/api/query/", "query", **QueryTestCase.__ADHOC__QUERY_PARAMS)
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(__TEST_RESPONSE__))
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(__TEST_RESPONSE__))
     def test_query(self, _):
         response = self._c.query(**QueryTestCase.__ADHOC__QUERY_PARAMS)
         self.assertEqual(response, QueryTestCase.__TEST_RESPONSE__)
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(None))
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(None))
     def test_query_missing_arquments(self, _):
         with self.assertRaises(Exception) as context:
             self._c.query()
@@ -181,33 +179,40 @@ class QueryTestCase(unittest.TestCase):
             self.assertTrue(isinstance(context.exception, errors.MissingArgumentError))
             self.assertTrue("Missing argument" in str(context.exception))
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(None))
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(None))
     def test_query_missing_start(self, _):
         with self.assertRaises(Exception) as context:
             self._c.query()
         self.assertTrue(isinstance(context.exception, errors.MissingArgumentError))
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(
-        response_content={"error": {"message": "Response code differ 200"}}, status_code=403))
-    def test_query_403(self, _):
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(
+        response_content={"error": {"message": "Response code differ 200"}}, status_code=402))
+    def test_query_402(self, _):
         with self.assertRaises(Exception) as context:
             self._c.query(**self.__ADHOC__QUERY_PARAMS)
         self.assertTrue(isinstance(context.exception, errors.UncaughtError))
 
-    @mock.patch('requests.post', side_effect=get_mock_requests_post(
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(
+        response_content={"error": {"message": "403 Forbidden"}}, status_code=403))
+    def test_query_403(self, _):
+        with self.assertRaises(Exception) as context:
+            self._c.query(**self.__ADHOC__QUERY_PARAMS)
+        self.assertTrue(isinstance(context.exception, errors.ForbiddenError))
+
+    @mock.patch('requests.Session.post', side_effect=get_mock_requests_post(
         response_content={"error": {"message": "Response code differ 200"}}, status_code=400))
     def test_query_400(self, _):
         with self.assertRaises(Exception) as context:
             self._c.query(**self.__ADHOC__QUERY_PARAMS)
         self.assertTrue(isinstance(context.exception, errors.ArgumentError))
 
-    @mock.patch('requests.post', side_effect=mock_tsdb_connection_error_post)
+    @mock.patch('requests.Session.post', side_effect=mock_tsdb_connection_error_post)
     def test_query_tsdb_error(self, _):
         with self.assertRaises(Exception) as context:
             self._c.query(**self.__ADHOC__QUERY_PARAMS)
         self.assertTrue(isinstance(context.exception, errors.TsdbConnectionError))
 
-    @mock.patch('requests.post', side_effect=mock_unexpected_error_post)
+    @mock.patch('requests.Session.post', side_effect=mock_unexpected_error_post)
     def test_aggregators_unexpected_error(self, _):
         with self.assertRaises(Exception) as context:
             self._c.query(**self.__ADHOC__QUERY_PARAMS)
