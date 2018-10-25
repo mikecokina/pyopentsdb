@@ -5,7 +5,7 @@ from unittest import mock
 from tests.testutils import get_mock_requests_post, mock_tsdb_connection_error_post, mock_unexpected_error_post
 from tests.testutils import GeneralUrlTestCase
 
-
+ 
 class SuggestTestCase(unittest.TestCase):
 
     __TEST_RESPONSE__ = [
