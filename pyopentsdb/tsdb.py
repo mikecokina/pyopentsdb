@@ -294,6 +294,15 @@ class TsdbConnector(object):
         """
         return stats.threads(self._host, self._session, **kwargs)
 
+    def version(self, **kwargs):
+        """
+        This endpoint returns information about the running version of OpenTSDB.
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
+        :return: dict
+        """
+        return version.version(self._host, self._session, **kwargs)
+
 
 def tsdb_connection(host):
     __TSDB_CONNECTION__ = TsdbConnector(

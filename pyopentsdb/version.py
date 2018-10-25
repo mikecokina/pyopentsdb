@@ -1,26 +1,22 @@
 from pyopentsdb import utils
 
 
-def version(host, port, protocol):
+def version(host, r_session, **kwargs):
     """
     This endpoint returns information about the running version of OpenTSDB.
 
     :param host: str
-    :param port: str
-    :param protocol: str
+    :param r_session: requests.Session
     :return: json
     """
-    url = api_url(host, port, protocol)
-    return utils.request_get(url)
+    return utils.request_get(api_url(host), r_session, **kwargs)
 
 
-def api_url(host, port, protocol):
+def api_url(host):
     """
     Make api url to obtain version info
 
     :param host: str
-    :param port: str
-    :param protocol: str
     :return: str
     # """
-    return '{}://{}:{}/api/version/'.format(protocol, host, port)
+    return '{}/api/version/'.format(host)
