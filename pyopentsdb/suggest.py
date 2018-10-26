@@ -24,6 +24,8 @@ def suggest(host, r_session, **kwargs):
 
 def metrics(host, r_session, **kwargs):
     kwargs.pop("type", None)
+    regexp = kwargs.pop('regexp', None)
+
     kwargs.update({
         'type': 'metrics',
         'q': kwargs.pop('q', ''),
@@ -31,7 +33,6 @@ def metrics(host, r_session, **kwargs):
     })
 
     metric_list = suggest(host, r_session, **kwargs)
-    regexp = kwargs.get('regexp')
     if regexp:
         metric_list = [metric for metric in metric_list if re.search(re.compile(regexp), str(metric), flags=0)]
     return metric_list
