@@ -330,8 +330,9 @@ class TsdbConnector(object):
         return put.put(self._host, self._session, data, **kwargs)
 
 
-def tsdb_connection(host):
+def tsdb_connection(host, **kwargs):
     __TSDB_CONNECTION__ = TsdbConnector(
         host=host,
+        **kwargs
     )
     return __TSDB_CONNECTION__
