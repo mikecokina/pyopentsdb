@@ -1,4 +1,14 @@
 # Change Log
+
+## [v0.2.1]()
+
+### Enhancements
+
+### Fixes
+ - ResourceWarning: unclosed ssl.SSLSocket warning - resolved by closing ``requests.Session`` on delete of ``TsdbConnector``
+### Upgrade notes
+
+
 ## [v0.2]()
 
 ### Enhancements
