@@ -4,6 +4,7 @@ from threading import Thread
 
 from pyopentsdb import errors
 from pyopentsdb.utils import request_post
+from pyopentsdb.conf import QueryPointer
 
 
 class IterableQueue(object):
@@ -105,7 +106,7 @@ def query(host, r_session, **kwargs):
         params.update({'end': int(end.timestamp())})
     params.update({'queries': queries})
     kwargs.update(dict(data=params))
-    return request_post(api_url(host, pointer='QUERY'), r_session, **kwargs)
+    return request_post(api_url(host, pointer=QueryPointer.QUERY), r_session, **kwargs)
 
 
 def multiquery(host, r_session, query_chunks, max_tsdb_concurrency=40, **kwargs):
@@ -186,5 +187,5 @@ def multiquery(host, r_session, query_chunks, max_tsdb_concurrency=40, **kwargs)
 
 
 def api_url(host, pointer):
-    if pointer == 'QUERY':
+    if pointer == QueryPointer.QUERY:
         return '{}/api/query/'.format(host)

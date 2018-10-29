@@ -1,4 +1,5 @@
 from pyopentsdb import utils
+from pyopentsdb.conf import StatsPointer
 
 
 def stats(host, r_session, **kwargs):
@@ -11,7 +12,7 @@ def stats(host, r_session, **kwargs):
     :param r_session: requests.Session
     :return: dict
     """
-    return utils.request_get(api_url(host, pointer='STATS'), r_session, **kwargs)
+    return utils.request_get(api_url(host, pointer=StatsPointer.STATS), r_session, **kwargs)
 
 
 def jvm(host, r_session, **kwargs):
@@ -23,7 +24,7 @@ def jvm(host, r_session, **kwargs):
     :param r_session: requests.Session
     :return: dict
     """
-    return utils.request_get(api_url(host, pointer='JVM'), r_session, **kwargs)
+    return utils.request_get(api_url(host, pointer=StatsPointer.JVM), r_session, **kwargs)
 
 
 def query(host, r_session, **kwargs):
@@ -39,7 +40,7 @@ def query(host, r_session, **kwargs):
     :param r_session: requests.Session
     :return: json
     """
-    return utils.request_get(api_url(host, pointer='QUERY'), r_session, **kwargs)
+    return utils.request_get(api_url(host, pointer=StatsPointer.QUERY), r_session, **kwargs)
 
 
 def region_clients(host, r_session, **kwargs):
@@ -51,7 +52,7 @@ def region_clients(host, r_session, **kwargs):
     :param r_session: requests.Session
     :return: json
     """
-    return utils.request_get(api_url(host, pointer='REGION_CLIENTS'), r_session, **kwargs)
+    return utils.request_get(api_url(host, pointer=StatsPointer.REGION_CLIENTS), r_session, **kwargs)
 
 
 def threads(host, r_session, **kwargs):
@@ -64,7 +65,7 @@ def threads(host, r_session, **kwargs):
     :param r_session: requests.Session
     :return: json
     """
-    return utils.request_get(api_url(host, pointer='THREADS'), r_session, **kwargs)
+    return utils.request_get(api_url(host, pointer=StatsPointer.THREADS), r_session, **kwargs)
 
 
 def api_url(host, pointer):
@@ -75,13 +76,13 @@ def api_url(host, pointer):
     :param pointer: str
     :return: str
     """
-    if pointer == 'STATS':
+    if pointer == StatsPointer.STATS:
         return '{}/api/stats/'.format(host)
-    elif pointer == 'JVM':
+    elif pointer == StatsPointer.JVM:
         return '{}/api/stats/jvm/'.format(host)
-    elif pointer == 'QUERY':
+    elif pointer == StatsPointer.QUERY:
         return '{}/api/stats/query/'.format(host)
-    elif pointer == 'REGION_CLIENTS':
+    elif pointer == StatsPointer.REGION_CLIENTS:
         return '{}/api/stats/region_clients/'.format(host)
-    elif pointer == 'THREADS':
+    elif pointer == StatsPointer.THREADS:
         return '{}/api/stats/threads/'.format(host)
