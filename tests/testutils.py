@@ -97,6 +97,14 @@ def mock_unexpected_error_get(url, *args, **kwargs):
     raise Exception("Unexpected error")
 
 
+def get_mock_utils_requests_post(requests_kwargs):
+    def mock_utils_request_post(url, r_session, **kwargs):
+        _ = kwargs.pop("data")
+        not_poped = [kwarg_key for kwarg_key in kwargs if kwarg_key not in requests_kwargs]
+        return dict(status=False) if not_poped else dict(status=True)
+    return mock_utils_request_post
+
+
 class GeneralUrlTestCase(object):
     def test_url(self, endpoint, exec_fn, **kwargs):
         for host in ADHOC_HOSTS:

@@ -3,7 +3,7 @@ from pyopentsdb import tsdb
 from pyopentsdb import errors
 from unittest import mock
 from tests.testutils import get_mock_requests_post, mock_tsdb_connection_error_post, mock_unexpected_error_post
-from tests.testutils import GeneralUrlTestCase
+from tests.testutils import GeneralUrlTestCase, get_mock_utils_requests_post
 
 
 class SuggestTestCase(unittest.TestCase):
@@ -65,3 +65,10 @@ class SuggestTestCase(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             self._c.suggest(type="metric")
         self.assertTrue(isinstance(context.exception, errors.ArgumentError))
+
+    @mock.patch('pyopentsdb.utils.request_post', side_effect=get_mock_utils_requests_post(
+        requests_kwargs=["headers", "cookies", "timeout"]))
+    def test_suggest_pop_arguments(self, _):
+        requests_kwargs = {"headers": {}, "cookies": {}, "timeout": {}}
+        response = self._c.suggest(type="metric", q="query", max=1000, **requests_kwargs)
+        self.assertTrue(response["status"])

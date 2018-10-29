@@ -7,7 +7,7 @@ from pyopentsdb import errors
 from pyopentsdb.query import tsdb_query_metrics_validation
 
 from tests.testutils import get_mock_requests_post, mock_tsdb_connection_error_post, mock_unexpected_error_post
-from tests.testutils import GeneralUrlTestCase
+from tests.testutils import GeneralUrlTestCase, get_mock_utils_requests_post
 
 # todo: unify repeating test
 
@@ -218,7 +218,18 @@ class QueryTestCase(unittest.TestCase):
             self._c.query(**self.__ADHOC__QUERY_PARAMS)
         self.assertTrue(isinstance(context.exception, errors.UncaughtError))
 
+    @mock.patch('pyopentsdb.query.request_post', side_effect=get_mock_utils_requests_post(
+        requests_kwargs=["headers", "cookies", "timeout"]))
+    def test_query_pop_arguments(self, _):
+        query_dict = {
+            "start": datetime.datetime(2010, 1, 1), "end": datetime.datetime(2010, 1, 1),
+            "ms": False, "show_tsuids": False, "no_annotations": False,
+            "global_annotations": False, "show_summary": False, "show_stats": True, "show_query": False,
+            "delete": False, "timezone": "UTC", "use_calendar": False,
+            "metrics": [{"aggregator": "none", "metric": "metric"}]
+        }
+        requests_kwargs = {"headers": {}, "cookies": {}, "timeout": {}}
+        response = self._c.query(**dict(**query_dict, **requests_kwargs))
+        self.assertTrue(response["status"])
 
-class MultiQueryTestCase(unittest.TestCase):
-    pass
 
