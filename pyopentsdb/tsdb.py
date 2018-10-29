@@ -18,7 +18,7 @@ class TsdbConnector(object):
         :param kwargs: see bellow
         :**kwargs options**:
         """
-        self._host = str(host)[:-1] if str(host).endswith('/') else str(host)
+        self._host = str(host).rstrip('/')
         self._session = kwargs.pop("session", requests.Session())
         self._config = self._parameters_serializer()
 
