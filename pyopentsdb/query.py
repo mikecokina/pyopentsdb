@@ -4,6 +4,7 @@ from threading import Thread
 
 from pyopentsdb import errors
 from pyopentsdb.utils import request_post
+from pyopentsdb.conf import QueryPointer
 
 
 class IterableQueue(object):
@@ -52,18 +53,18 @@ def tsdb_query_metrics_validation(**kwargs):
                         "Missing argument 'type', 'tagk' or 'filter' in filters object")
 
 
-def query(host, port, protocol, timeout, **kwargs):
+def query(host, r_session, **kwargs):
     """
     :param host: str
-    :param port: str
-    :param protocol: str
-    :param timeout: int/float/tuple; requests.request timeout
+    :param r_session: requests.Session
     :param kwargs: dict
     :return: dict
     """
 
+    # todo: make sure kwargs of tsdb are not colliding kwargs of requests
+
     try:
-        start = kwargs['start']
+        start = kwargs.pop('start')
     except KeyError:
         raise errors.MissingArgumentError("'start' is a required argument")
 
@@ -73,17 +74,19 @@ def query(host, port, protocol, timeout, **kwargs):
         raise errors.MissingArgumentError(str(e))
 
     # general driven arguments
-    end = kwargs.get('end') or None
-    ms_resolution = bool(kwargs.get('ms', False))
-    show_tsuids = bool(kwargs.get('show_tsuids', False))
-    no_annotations = bool(kwargs.get('no_annotations', False))
-    global_annotations = bool(kwargs.get('global_annotations', False))
-    show_summary = bool(kwargs.get('show_summary', False))
-    show_stats = bool(kwargs.get('show_stats', False))
-    show_query = bool(kwargs.get('show_query', False))
-    delete_match = bool(kwargs.get('delete', False))
-    timezone = kwargs.get('timezone', 'UTC')
-    use_calendar = bool(kwargs.get('use_calendar', False))
+    end = kwargs.pop('end', None)
+    ms_resolution = bool(kwargs.pop('ms', False))
+    show_tsuids = bool(kwargs.pop('show_tsuids', False))
+    no_annotations = bool(kwargs.pop('no_annotations', False))
+    global_annotations = bool(kwargs.pop('global_annotations', False))
+    show_summary = bool(kwargs.pop('show_summary', False))
+    show_stats = bool(kwargs.pop('show_stats', False))
+    show_query = bool(kwargs.pop('show_query', False))
+    delete_match = bool(kwargs.pop('delete', False))
+    timezone = kwargs.pop('timezone', 'UTC')
+    use_calendar = bool(kwargs.pop('use_calendar', False))
+
+    queries = kwargs.pop('metrics')
 
     params = {
         'start': '{}'.format(int(start.timestamp())),
@@ -99,25 +102,19 @@ def query(host, port, protocol, timeout, **kwargs):
         'useCalendar': use_calendar,
         'queries': list(),
     }
-
     if end:
         params.update({'end': int(end.timestamp())})
-
-    queries = kwargs.get('metrics')
     params.update({'queries': queries})
+    kwargs.update(dict(data=params))
+    return request_post(api_url(host, pointer=QueryPointer.QUERY), r_session, **kwargs)
 
-    url = api_url(host, port, protocol, pointer='QUERY')
-    return request_post(url, params, timeout)
 
-
-def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency=40):
+def multiquery(host, r_session, query_chunks, max_tsdb_concurrency=40, **kwargs):
     """
     OpenTSDB /api/query/ concurrency wrapper
 
-    :param protocol: str (mandatory); protocol (http/https)
-    :param port: int (mandatory); OpenTSDB instance port
     :param host: str (mandatory); OpenTSDB host
-    :param timeout: int/float/tuple; requests.request timeout
+    :param r_session: requests.Session
     :param query_chunks: list (mandatory); list of json serializable dicts representing OpenTSDB query
     :param max_tsdb_concurrency: int (optional), default=40; maximum number of concurrency
                                                             threads hitting OpenTSDB api
@@ -140,7 +137,7 @@ def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency
                 break
 
             try:
-                result = query(host, port, protocol, timeout, **query_kwargs)
+                result = query(host, r_session, **dict(**query_kwargs, **kwargs))
                 result_queue.put(result)
             except Exception as we:
                 error_queue.put(we)
@@ -189,6 +186,6 @@ def multiquery(host, port, protocol, timeout, query_chunks, max_tsdb_concurrency
     return sum([val for val in IterableQueue(result_queue)], list())
 
 
-def api_url(host, port, protocol, pointer):
-    if pointer == 'QUERY':
-        return '{}://{}:{}/api/query/'.format(protocol, host, port)
+def api_url(host, pointer):
+    if pointer == QueryPointer.QUERY:
+        return '{}/api/query/'.format(host)

@@ -1,3 +1,5 @@
+import requests
+
 from pyopentsdb import query
 from pyopentsdb import suggest
 from pyopentsdb import aggregators
@@ -10,27 +12,20 @@ from pyopentsdb import put
 
 
 class TsdbConnector(object):
-    def __init__(self, host, port, **kwargs):
+    def __init__(self, host, **kwargs):
         """
         :param port: int (mandatory); OpenTSDB instance port
-        :param host: str (mandatory); OpenTSDB host
         :param kwargs: see bellow
         :**kwargs options**:
-            * **timeout** * -- str (optional), default=None; requests.request timeout
-            * **protocol** * -- str (optional), default=http; protocol (http/https)
         """
-        self._host = host
-        self._port = port
-        self._protocol = kwargs.get('protocol', 'http')
-        self._timeout = kwargs.get('timeout', None)
+        self._host = str(host).rstrip('/')
+        self._session = kwargs.pop("session", requests.Session())
         self._config = self._parameters_serializer()
 
     def _parameters_serializer(self):
         return {
             'host': self._host,
-            'port': self._port,
-            'protocol': self._protocol,
-            'timeout': self._timeout
+            'session': self._session
         }
 
     def suggest(self, **kwargs):
@@ -50,9 +45,10 @@ class TsdbConnector(object):
                     A string to match on for the given type
                * **max** * -- int;
                     The maximum number of suggested results to return. Must be greater than 0
+               * **<requests.request kwargs>** *
         :return: dict
         """
-        return suggest.suggest(self._host, self._port, self._protocol, self._timeout, **kwargs)
+        return suggest.suggest(self._host, self._session, **kwargs)
 
     def metrics(self, **kwargs):
         """
@@ -63,11 +59,31 @@ class TsdbConnector(object):
                     The maximum number of suggested results to return. Must be greater than 0
                * **regxp** * -- str;
                     Regex pattern to matrics have to satisfied
-                * **q** * -- str;
+               * **q** * -- str;
                     A metric to match on
+               * **<requests.request kwargs>** *
         :return: dict
         """
-        return suggest.metrics(self._host, self._port, self._protocol, self._timeout,  **kwargs)
+        return suggest.metrics(self._host, self._session, **kwargs)
+
+    def config(self, **kwargs):
+        """
+        This endpoint returns information about the running configuration of the TSD.
+        It is read only and cannot be used to set configuration options.
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
+        :return: dict
+        """
+        return config.tsdb_configuration(self._host, self._session, **kwargs)
+
+    def filters(self, **kwargs):
+        """
+        This endpoint lists the various filters loaded by the TSD and some information about how to use them.
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
+        :return: dict
+        """
+        return config.filters(self._host, self._session, **kwargs)
 
     def query(self, **kwargs):
         """
@@ -176,10 +192,11 @@ class TsdbConnector(object):
                         supported by the JRE installed on the TSD server.
                * **use_calendar** * -- bool;
                         Whether or not use the calendar based on the given timezone for downsampling intervals
+               * **<requests.request kwargs>** *
         :return: dict
         """
 
-        return query.query(self._host, self._port, self._protocol, self._timeout,  **kwargs)
+        return query.query(self._host, self._session, **kwargs)
 
     def multiquery(self, query_chunks, **kwargs):
         """
@@ -190,64 +207,60 @@ class TsdbConnector(object):
         :**kwargs options**:
             * **max_tsdb_concurrency** -- int (optional), default=40;
                         Maximum number of concurrency threads hitting OpenTSDB api
+            * **<requests.request kwargs>** *
         :return: dict
         """
+        return query.multiquery(self._host, self._session,  query_chunks, **kwargs)
 
-        return query.multiquery(self._host, self._port, self._protocol, self._timeout,  query_chunks, **kwargs)
-
-    def aggregators(self):
+    def aggregators(self, **kwargs):
         """
         This endpoint simply lists the names of implemented aggregation functions used in timeseries queries.
         :return:  dict
         """
-        return aggregators.aggregators(self._host, self._port, self._protocol, self._timeout)
+        return aggregators.aggregators(self._host, self._session, **kwargs)
 
-    def dropcaches(self):
+    def dropcaches(self, **kwargs):
         """
         This endpoint purges the in-memory data cached in OpenTSDB. This includes all UID to name
         and name to UID maps for metrics, tag names and tag values.
-
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return dropcaches.dropcaches(**self._config)
+        return dropcaches.dropcaches(self._host, self._session, **kwargs)
 
-    def config(self):
+    def serializers(self, **kwargs):
         """
-        This endpoint returns information about the running configuration of the TSD.
-        It is read only and cannot be used to set configuration options.
-
+        This endpoint lists the serializer plugins loaded by the running TSD. Information
+        given includes the name, implemented methods, content types and methods
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return config.tsdb_configuration(**self._config)
+        return serializers.serializers(self._host, self._session, **kwargs)
 
-    def filters(self):
-        """
-        This endpoint lists the various filters loaded by the TSD and some information about how to use them.
-
-        :return: dict
-        """
-        return config.filters(**self._config)
-
-    def stats(self):
+    def stats(self, **kwargs):
         """
         This endpoint provides a list of statistics for the running TSD.
         Sub endpoints return details about other TSD components such as the JVM,
         thread states or storage client. All statistics are read only.
-
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return stats.stats(**self._config)
+        return stats.stats(self._host, self._session, **kwargs)
 
-    def jvm_stats(self):
+    def jvm_stats(self, **kwargs):
         """
         The threads endpoint is used for debugging the TSD's JVM process and includes
         stats about the garbage collector, system load and memory usage. (v2.2)
-
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return stats.jvm(**self._config)
+        return stats.jvm(self._host, self._session, **kwargs)
 
-    def query_stats(self):
+    def query_stats(self, **kwargs):
         """
         This endpoint can be used for tracking and troubleshooting queries executed
         against a TSD. It maintains an unbounded list of currently executing
@@ -255,46 +268,41 @@ class TsdbConnector(object):
         queries out of memory). Information about each query includes the
         original query, request headers, response code, timing and an exception
         if thrown. (v2.2)
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return stats.query(**self._config)
+        return stats.query(self._host, self._session, **kwargs)
 
-    def region_clients(self):
+    def region_clients(self, **kwargs):
         """
         Returns information about the various HBase region server clients in AsyncHBase.
-        This helps to identify issues with a particular region server. (v2.2)
-
+        This helps t identify issues with a particular region server. (v2.2)
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return dict
         """
-        return stats.region_clients(**self._config)
+        return stats.region_clients(self._host, self._session, **kwargs)
 
-    def threads(self):
+    def threads(self, **kwargs):
         """
         The threads endpoint is used for debugging the TSD and providing insight
         into the state and execution of various threads without having to resort
         to a JStack trace. (v2.2)
-
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return stats.threads(**self._config)
+        return stats.threads(self._host, self._session, **kwargs)
 
-    def version(self):
+    def version(self, **kwargs):
         """
         This endpoint returns information about the running version of OpenTSDB.
-
+        :**kwargs options**:
+            * **<requests.request kwargs>** *
         :return: dict
         """
-        return version.version(**self._config)
-
-    def serializers(self):
-        """
-        This endpoint lists the serializer plugins loaded by the running TSD. Information
-        given includes the name, implemented methods, content types and methods
-
-        :return: dict
-        """
-
-        return serializers.serializers(**self._config)
+        return version.version(self._host, self._session, **kwargs)
 
     def put(self, data, **kwargs):
         """
@@ -313,19 +321,21 @@ class TsdbConnector(object):
                     returning with an error. When a timeout occurs, using the details flag will tell
                     how many data points failed and how many succeeded. sync must also be given for this
                     to take effect. A value of 0 means the write will not timeout.
+               * **<requests.request kwargs>** *
         If both detailed and summary are present in a query string, the API will respond with detailed information.
         Standard status code is 204
         Standard status code with details is 200 (request._content example: b'{"success":2,"failed":0,"errors":[]}')
         :return: dict
         """
-        return put.put(self._host, self._port, self._protocol, self._timeout, data, **kwargs)
+        return put.put(self._host, self._session, data, **kwargs)
+
+    def close(self):
+        self._session.close()
 
 
-def tsdb_connection(host, port, protocol='http', timeout=None):
+def tsdb_connection(host, **kwargs):
     __TSDB_CONNECTION__ = TsdbConnector(
         host=host,
-        port=port,
-        protocol=protocol,
-        timeout=timeout
+        **kwargs
     )
     return __TSDB_CONNECTION__

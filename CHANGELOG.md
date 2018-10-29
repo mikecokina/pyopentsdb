@@ -1,4 +1,14 @@
 # Change Log
+## [v0.2]()
+
+### Enhancements
+
+### Fixes
+
+### Upgrade notes
+ - argument ``host`` is accepted as string. e.g. ``http://server.domain:4222/`` or ``https://server.domain/tsdb/``
+ - capability to pass all ``requests.request`` kwargs and ``requests.Session`` instance
+
 
 ## [v0.1]()
 

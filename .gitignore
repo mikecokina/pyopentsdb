@@ -12,3 +12,4 @@ main.py
 env
 env/*
 main.py
+__main__.py
