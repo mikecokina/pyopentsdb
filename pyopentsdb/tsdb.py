@@ -332,6 +332,9 @@ class TsdbConnector(object):
     def close(self):
         self._session.close()
 
+    def __del__(self):
+        self.close()
+
 
 def tsdb_connection(host, **kwargs):
     __TSDB_CONNECTION__ = TsdbConnector(
