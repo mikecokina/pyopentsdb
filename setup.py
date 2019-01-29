@@ -30,10 +30,10 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/s-t-e-a-l-t-h/pyopentsdb',
+    url='https://github.com/mikecokina/pyopentsdb.git',
 
     # Author details
-    author='s-t-e-a-l-t-h',
+    author='mikecokina',
     author_email='',
 
     # Choose your license
